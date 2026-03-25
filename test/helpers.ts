@@ -1,8 +1,11 @@
 import JSZip from "jszip";
 
 interface TestSlide {
-  text: string[];
+  text?: string[];
   backgroundColor?: string;
+  extraSpTreeChildren?: string[];
+  rawXml?: string;
+  relsXml?: string;
 }
 
 export async function createTestPptx(slides: TestSlide[]): Promise<ArrayBuffer> {
@@ -53,7 +56,7 @@ export async function createTestPptx(slides: TestSlide[]): Promise<ArrayBuffer> 
 
   slides.forEach((slide, index) => {
     const slideNumber = index + 1;
-    const paragraphs = slide.text
+    const paragraphs = (slide.text || [])
       .map(
         (text) => `
           <a:p>
@@ -71,13 +74,9 @@ export async function createTestPptx(slides: TestSlide[]): Promise<ArrayBuffer> 
       ? `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="${slide.backgroundColor.replace("#", "")}"/></a:solidFill></p:bgPr></p:bg>`
       : "";
 
-    zip.file(
-      `ppt/slides/slide${slideNumber}.xml`,
-      `<?xml version="1.0" encoding="UTF-8"?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-  <p:cSld>
-    ${background}
-    <p:spTree>
+    const defaultTextShape =
+      paragraphs.length > 0
+        ? `
       <p:sp>
         <p:spPr>
           <a:xfrm>
@@ -91,11 +90,27 @@ export async function createTestPptx(slides: TestSlide[]): Promise<ArrayBuffer> 
           <a:lstStyle/>
           ${paragraphs}
         </p:txBody>
-      </p:sp>
+      </p:sp>`
+        : "";
+
+    const slideXml =
+      slide.rawXml ||
+      `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    ${background}
+    <p:spTree>
+      ${defaultTextShape}
+      ${(slide.extraSpTreeChildren || []).join("\n")}
     </p:spTree>
   </p:cSld>
-</p:sld>`,
-    );
+</p:sld>`;
+
+    zip.file(`ppt/slides/slide${slideNumber}.xml`, slideXml);
+
+    if (slide.relsXml) {
+      zip.file(`ppt/slides/_rels/slide${slideNumber}.xml.rels`, slide.relsXml);
+    }
   });
 
   return zip.generateAsync({ type: "arraybuffer" });
