@@ -72,11 +72,13 @@ export function PptxPreview({ file }: { file: ArrayBuffer | null }) {
 
 ## API
 
-### `renderPptx(arrayBuffer, options)`
+### `renderPptx(input, options)`
 
 Parses a `.pptx` file and immediately renders the resulting slides into `options.container`.
 
-### `parsePptx(arrayBuffer)`
+`input` can be an `ArrayBuffer` or `Uint8Array`.
+
+### `parsePptx(input)`
 
 Returns a normalized slide model without rendering:
 
@@ -88,6 +90,8 @@ type PptxParseResult = {
   title?: string;
 };
 ```
+
+`input` can be an `ArrayBuffer` or `Uint8Array`.
 
 ### `renderSlides(slides, options)`
 
@@ -151,8 +155,10 @@ This is not a pixel-perfect PowerPoint clone. The goal is pragmatic HTML renderi
 
 ```bash
 pnpm install
+pnpm run fixtures:generate
 pnpm run verify
 pnpm run pack:check
+pnpm run test:browser
 ```
 
 ## Versioning And Releases
@@ -163,6 +169,12 @@ pnpm run pack:check
 - Configure npm trusted publishing before using automated publish.
 - `main` is intended to stay releasable; use branches and pull requests for normal changes.
 - Release tags matching `v*` are protected against rewrites and deletions.
+
+## Testing Strategy
+
+- unit and parser/renderer regression tests run in `vitest` with `jsdom`
+- committed `.pptx` fixtures under `test/fixtures/real/` cover realistic parse and render paths
+- a Playwright smoke test renders a real fixture in Chromium against the built package
 
 ## Contributing
 

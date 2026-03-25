@@ -4,6 +4,7 @@
 
 ```bash
 pnpm install
+pnpm run fixtures:generate
 pnpm run verify
 ```
 
@@ -15,6 +16,7 @@ pnpm run verify
 - open pull requests from topic branches instead of pushing directly to `main`
 - run `pnpm run verify` before opening a pull request
 - run `pnpm run pack:check` if you change package metadata or published files
+- run `pnpm run test:browser` when you change browser-facing render behavior, bundling, or fixture handling
 
 ## Release Process
 

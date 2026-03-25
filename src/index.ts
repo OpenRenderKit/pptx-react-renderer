@@ -57,7 +57,10 @@ import type { RenderOptions } from "./types";
 /**
  * Main render function - parses PPTX and renders to HTML
  */
-export async function renderPptx(arrayBuffer: ArrayBuffer, options: RenderOptions): Promise<void> {
+export async function renderPptx(
+  arrayBuffer: ArrayBuffer | Uint8Array,
+  options: RenderOptions,
+): Promise<void> {
   const { slides } = await parsePptx(arrayBuffer);
   renderSlides(slides, options);
 }

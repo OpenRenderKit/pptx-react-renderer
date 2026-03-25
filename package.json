@@ -48,10 +48,14 @@
   },
   "scripts": {
     "build": "tsup",
+    "browser:bundle-harness": "esbuild test/browser/harness/runner.ts --bundle --platform=browser --format=esm --outfile=test/browser/harness/bundle.js",
     "clean": "rm -rf dist coverage",
+    "fixtures:generate": "node scripts/generate-test-fixtures.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "pnpm run test:unit",
+    "test:unit": "vitest run",
     "test:watch": "vitest",
+    "test:browser": "pnpm run build && pnpm run browser:bundle-harness && playwright test",
     "verify": "pnpm run typecheck && pnpm run build && pnpm run test",
     "pack:check": "pnpm pack --dry-run",
     "prepublishOnly": "pnpm run clean && pnpm run verify"
@@ -60,7 +64,9 @@
     "jszip": "^3.10.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/node": "^24.5.2",
+    "esbuild": "^0.27.0",
     "jsdom": "^27.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
