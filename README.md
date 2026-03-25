@@ -175,9 +175,17 @@ The sanitized fixture preserves slide structure, SmartArt/diagram XML, tables, g
 ## Versioning And Releases
 
 - Follow semver.
-- Create a release commit and tag in the form `vX.Y.Z`.
-- The repository includes CI and a publish workflow for GitHub Actions.
-- Configure npm trusted publishing before using automated publish.
+- Merges to `main` are the release trigger.
+- Every pull request must carry exactly one release label: `release:patch`, `release:minor`, `release:major`, or `release:skip`.
+- The `publish` workflow reads the merged PR label, resolves the next version, publishes to npm, and creates a matching GitHub release tag.
+- Before `1.0.0`, release labels are intentionally softened:
+  - `release:major` becomes a semver minor bump, for example `0.2.3 -> 0.3.0`
+  - `release:minor` becomes a semver patch bump, for example `0.2.3 -> 0.2.4`
+  - `release:patch` stays a patch bump
+  - `release:skip` suppresses publication for that merge
+- On the first publish, the workflow uses the version already present in `package.json`.
+- For the bootstrap release, either set a repository secret named `NPM_TOKEN` or publish the first version manually so the package exists on npm.
+- After the package exists, configure npm trusted publishing for `OpenRenderKit/pptx-react-renderer` and `.github/workflows/publish.yml`, then you can remove `NPM_TOKEN`.
 - `main` is intended to stay releasable; use branches and pull requests for normal changes.
 - Release tags matching `v*` are protected against rewrites and deletions.
 
