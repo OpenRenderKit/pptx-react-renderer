@@ -4,6 +4,12 @@
 
 The package is framework-agnostic, but it works naturally in React because the main API renders into a container element you control.
 
+## Project Status
+
+`pptx-react-renderer` is heavily under development.
+
+It is already usable for browser-based slide previewing, but the renderer is not feature-complete and it does not aim to match PowerPoint perfectly yet. Expect rough edges, unsupported constructs, and rendering mismatches on complex decks.
+
 ## Features
 
 - Parses `.pptx` archives client-side with `jszip`
@@ -114,11 +120,24 @@ Defaults:
 
 This is not a pixel-perfect PowerPoint clone. The goal is pragmatic HTML rendering of common slide content in browser applications.
 
+## Current Limitations
+
+- The package is browser-first. Parsing requires `DOMParser`, `FileReader`, and `Blob`, and rendering requires `document`.
+- Server-side rendering is not supported directly. Use the parser and renderer only in browser-like client runtimes.
+- Grouped shapes are not fully reconstructed yet. In the current parser, group containers are simplified rather than expanded into their original child elements.
+- Chart and table `graphicFrame` content is currently rendered as placeholder blocks instead of full chart/table fidelity.
+- SmartArt and diagram support is partial. The parser attempts to extract diagram data and drawing shapes, but many decks still fall back to simplified node/text rendering.
+- Custom geometry support is incomplete. Some path data is handled, but arc commands are currently skipped.
+- Missing or unresolved embedded images fall back to a placeholder image box.
+- Theme support is intentionally minimal and limited to the library's light/dark wrapper styling.
+- Large decks can use significant memory because image assets are converted to data URLs during parsing.
+
 ## Runtime Notes
 
 - Parsing requires browser APIs: `DOMParser`, `FileReader`, and `Blob`.
 - Rendering additionally requires `document`.
 - Server-side rendering is not supported directly.
+- For React or Next.js apps, call the renderer from client-only code such as `useEffect` in a client component.
 - If you run tests in Node, use a DOM-capable environment such as `jsdom`.
 - Image data is currently inlined as data URLs during parsing, which can increase memory usage for large decks.
 
@@ -142,6 +161,8 @@ pnpm run pack:check
 - Create a release commit and tag in the form `vX.Y.Z`.
 - The repository includes CI and a publish workflow for GitHub Actions.
 - Configure npm trusted publishing before using automated publish.
+- `main` is intended to stay releasable; use branches and pull requests for normal changes.
+- Release tags matching `v*` are protected against rewrites and deletions.
 
 ## Contributing
 
