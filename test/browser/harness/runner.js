@@ -2,9 +2,7 @@ import { renderPptx } from "../../../dist/index.js";
 
 async function main() {
   const container = document.getElementById("preview");
-  (window as Window & { __PPTX_RENDER_STATUS__?: unknown }).__PPTX_RENDER_STATUS__ = {
-    state: "loading",
-  };
+  window.__PPTX_RENDER_STATUS__ = { state: "loading" };
 
   if (!container) {
     throw new Error("Missing preview container");
@@ -21,13 +19,13 @@ async function main() {
       theme: "light",
     });
 
-    (window as Window & { __PPTX_RENDER_STATUS__?: unknown }).__PPTX_RENDER_STATUS__ = {
+    window.__PPTX_RENDER_STATUS__ = {
       state: "ready",
       slideCount: document.querySelectorAll(".pptx-slide").length,
     };
   } catch (error) {
     console.error(error);
-    (window as Window & { __PPTX_RENDER_STATUS__?: unknown }).__PPTX_RENDER_STATUS__ = {
+    window.__PPTX_RENDER_STATUS__ = {
       state: "error",
       message: String(error),
     };
