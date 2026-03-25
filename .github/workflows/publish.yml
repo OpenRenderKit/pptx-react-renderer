@@ -1,28 +1,178 @@
 name: publish
 
 on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - ready_for_review
   workflow_dispatch:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  publish:
+  release-intent:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write
+      pull-requests: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map((label) => label.name);
+            const releaseLabels = labels.filter((label) =>
+              ["release:patch", "release:minor", "release:major", "release:skip"].includes(label)
+            );
 
-      - uses: pnpm/action-setup@v4
+            if (releaseLabels.length !== 1) {
+              core.setFailed(
+                `Expected exactly one release label on the PR. Found: ${releaseLabels.join(", ") || "none"}. ` +
+                "Use one of: release:patch, release:minor, release:major, release:skip."
+              );
+              return;
+            }
 
-      - uses: actions/setup-node@v4
+            core.notice(`Release intent: ${releaseLabels[0]}`);
+
+  publish:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
 
       - run: pnpm install --frozen-lockfile
+      - id: package
+        run: |
+          echo "name=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).name")" >> "$GITHUB_OUTPUT"
+          echo "source_version=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")" >> "$GITHUB_OUTPUT"
+      - id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            if (context.eventName === "workflow_dispatch") {
+              core.setOutput("number", "");
+              core.setOutput("label", "release:patch");
+              core.notice("Manual run: defaulting release intent to release:patch.");
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const response = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner,
+              repo,
+              commit_sha: context.sha,
+            });
+
+            const mergedPullRequests = response.data
+              .filter((pullRequest) => pullRequest.merged_at)
+              .sort((a, b) => new Date(b.merged_at) - new Date(a.merged_at));
+
+            if (mergedPullRequests.length === 0) {
+              core.setFailed(`No merged pull request was associated with commit ${context.sha}.`);
+              return;
+            }
+
+            const pullRequest = mergedPullRequests[0];
+            const labels = pullRequest.labels.map((label) => label.name);
+            const releaseLabels = labels.filter((label) =>
+              ["release:patch", "release:minor", "release:major", "release:skip"].includes(label)
+            );
+
+            if (releaseLabels.length !== 1) {
+              core.setFailed(
+                `Merged PR #${pullRequest.number} must have exactly one release label. Found: ${releaseLabels.join(", ") || "none"}.`
+              );
+              return;
+            }
+
+            core.setOutput("number", String(pullRequest.number));
+            core.setOutput("label", releaseLabels[0]);
+            core.notice(`Resolved release intent from PR #${pullRequest.number}: ${releaseLabels[0]}`);
+      - id: published
+        env:
+          PACKAGE_NAME: ${{ steps.package.outputs.name }}
+        run: |
+          if PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null); then
+            echo "current_version=$PUBLISHED_VERSION" >> "$GITHUB_OUTPUT"
+            echo "is_initial=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "current_version=${{ steps.package.outputs.source_version }}" >> "$GITHUB_OUTPUT"
+            echo "is_initial=true" >> "$GITHUB_OUTPUT"
+          fi
+      - id: plan
+        run: |
+          EXTRA_FLAG=""
+          if [ "${{ steps.published.outputs.is_initial }}" = "true" ]; then
+            EXTRA_FLAG="--initial"
+          fi
+
+          eval "$(node scripts/release-plan.mjs "${{ steps.published.outputs.current_version }}" "${{ steps.pr.outputs.label }}" $EXTRA_FLAG --format=env)"
+
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "next_version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "requested_label=$REQUESTED_LABEL" >> "$GITHUB_OUTPUT"
+          echo "effective_bump=$EFFECTIVE_BUMP" >> "$GITHUB_OUTPUT"
+          echo "should_publish=$SHOULD_PUBLISH" >> "$GITHUB_OUTPUT"
+          echo "is_initial_release=$IS_INITIAL_RELEASE" >> "$GITHUB_OUTPUT"
       - run: pnpm run verify
-      - run: npm publish --access public
+      - if: steps.plan.outputs.should_publish == 'false'
+        run: echo "Release skipped for this merge."
+      - if: steps.plan.outputs.should_publish == 'true'
+        run: npm version "${{ steps.plan.outputs.next_version }}" --no-git-tag-version --allow-same-version
+      - if: steps.plan.outputs.should_publish == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
+      - if: steps.plan.outputs.should_publish == 'true'
+        env:
+          RELEASE_TAG: v${{ steps.plan.outputs.next_version }}
+        run: |
+          git tag "$RELEASE_TAG" "${GITHUB_SHA}"
+          git push origin "$RELEASE_TAG"
+      - if: steps.plan.outputs.should_publish == 'true'
+        uses: actions/github-script@v8
+        env:
+          RELEASE_TAG: v${{ steps.plan.outputs.next_version }}
+          RELEASE_PR_NUMBER: ${{ steps.pr.outputs.number }}
+          EFFECTIVE_BUMP: ${{ steps.plan.outputs.effective_bump }}
+          REQUESTED_LABEL: ${{ steps.plan.outputs.requested_label }}
+        with:
+          script: |
+            const body = [
+              `Automated publish from ${process.env.RELEASE_PR_NUMBER ? `PR #${process.env.RELEASE_PR_NUMBER}` : "workflow_dispatch"}.`,
+              "",
+              `Requested release label: \`${process.env.REQUESTED_LABEL}\``,
+              `Effective semver bump: \`${process.env.EFFECTIVE_BUMP}\``,
+            ].join("\n");
+
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: process.env.RELEASE_TAG,
+              target_commitish: context.sha,
+              name: process.env.RELEASE_TAG,
+              body,
+              generate_release_notes: true,
+            });

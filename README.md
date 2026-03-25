@@ -72,11 +72,13 @@ export function PptxPreview({ file }: { file: ArrayBuffer | null }) {
 
 ## API
 
-### `renderPptx(arrayBuffer, options)`
+### `renderPptx(input, options)`
 
 Parses a `.pptx` file and immediately renders the resulting slides into `options.container`.
 
-### `parsePptx(arrayBuffer)`
+`input` can be an `ArrayBuffer` or `Uint8Array`.
+
+### `parsePptx(input)`
 
 Returns a normalized slide model without rendering:
 
@@ -88,6 +90,8 @@ type PptxParseResult = {
   title?: string;
 };
 ```
+
+`input` can be an `ArrayBuffer` or `Uint8Array`.
 
 ### `renderSlides(slides, options)`
 
@@ -137,6 +141,7 @@ This is not a pixel-perfect PowerPoint clone. The goal is pragmatic HTML renderi
 - Parsing requires browser APIs: `DOMParser`, `FileReader`, and `Blob`.
 - Rendering additionally requires `document`.
 - Server-side rendering is not supported directly.
+- The published package currently targets Node.js 20+ for local development, testing, and build tooling.
 - For React or Next.js apps, call the renderer from client-only code such as `useEffect` in a client component.
 - If you run tests in Node, use a DOM-capable environment such as `jsdom`.
 - Image data is currently inlined as data URLs during parsing, which can increase memory usage for large decks.
@@ -151,18 +156,45 @@ This is not a pixel-perfect PowerPoint clone. The goal is pragmatic HTML renderi
 
 ```bash
 pnpm install
+pnpm run fixtures:generate
 pnpm run verify
 pnpm run pack:check
+pnpm run test:browser
 ```
+
+Use Node.js 20 or newer for local development. The current Vitest/Vite toolchain in this repo does not support Node 18.
+
+To regenerate the committed sanitized golden fixture from a local source deck:
+
+```bash
+PPTX_COMPLEX_SOURCE="/absolute/path/to/source-deck.pptx" pnpm run fixtures:sanitize-complex
+```
+
+The sanitized fixture preserves slide structure, SmartArt/diagram XML, tables, groups, relationships, and media slots while replacing sensitive text, metadata, and image payloads.
 
 ## Versioning And Releases
 
 - Follow semver.
-- Create a release commit and tag in the form `vX.Y.Z`.
-- The repository includes CI and a publish workflow for GitHub Actions.
-- Configure npm trusted publishing before using automated publish.
+- Merges to `main` are the release trigger.
+- Every pull request must carry exactly one release label: `release:patch`, `release:minor`, `release:major`, or `release:skip`.
+- The `publish` workflow reads the merged PR label, resolves the next version, publishes to npm, and creates a matching GitHub release tag.
+- Before `1.0.0`, release labels are intentionally softened:
+  - `release:major` becomes a semver minor bump, for example `0.2.3 -> 0.3.0`
+  - `release:minor` becomes a semver patch bump, for example `0.2.3 -> 0.2.4`
+  - `release:patch` stays a patch bump
+  - `release:skip` suppresses publication for that merge
+- On the first publish, the workflow uses the version already present in `package.json`.
+- For the bootstrap release, either set a repository secret named `NPM_TOKEN` or publish the first version manually so the package exists on npm.
+- After the package exists, configure npm trusted publishing for `OpenRenderKit/pptx-react-renderer` and `.github/workflows/publish.yml`, then you can remove `NPM_TOKEN`.
 - `main` is intended to stay releasable; use branches and pull requests for normal changes.
 - Release tags matching `v*` are protected against rewrites and deletions.
+
+## Testing Strategy
+
+- unit and parser/renderer regression tests run in `vitest` with `jsdom`
+- committed `.pptx` fixtures under `test/fixtures/real/` cover realistic parse and render paths
+- a Playwright smoke test renders a real fixture in Chromium against the built package
+- a sanitized golden deck derived from a complex local source presentation is committed so CI can exercise realistic SmartArt, tables, groups, and mixed media without depending on private files
 
 ## Contributing
 

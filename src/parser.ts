@@ -19,7 +19,7 @@ import type {
 /**
  * Parse a PPTX file and extract slide content
  */
-export async function parsePptx(arrayBuffer: ArrayBuffer): Promise<PptxParseResult> {
+export async function parsePptx(arrayBuffer: ArrayBuffer | Uint8Array): Promise<PptxParseResult> {
   assertParseApisAvailable();
   const zip = await JSZip.loadAsync(arrayBuffer);
 
