@@ -141,6 +141,7 @@ This is not a pixel-perfect PowerPoint clone. The goal is pragmatic HTML renderi
 - Parsing requires browser APIs: `DOMParser`, `FileReader`, and `Blob`.
 - Rendering additionally requires `document`.
 - Server-side rendering is not supported directly.
+- The published package currently targets Node.js 20+ for local development, testing, and build tooling.
 - For React or Next.js apps, call the renderer from client-only code such as `useEffect` in a client component.
 - If you run tests in Node, use a DOM-capable environment such as `jsdom`.
 - Image data is currently inlined as data URLs during parsing, which can increase memory usage for large decks.
@@ -160,6 +161,8 @@ pnpm run verify
 pnpm run pack:check
 pnpm run test:browser
 ```
+
+Use Node.js 20 or newer for local development. The current Vitest/Vite toolchain in this repo does not support Node 18.
 
 To regenerate the committed sanitized golden fixture from a local source deck:
 

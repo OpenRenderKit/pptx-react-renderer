@@ -8,6 +8,8 @@ pnpm run fixtures:generate
 pnpm run verify
 ```
 
+Use Node.js 20 or newer for local development. The current test/build toolchain does not support Node 18.
+
 To refresh the committed sanitized regression deck from a local source presentation:
 
 ```bash
