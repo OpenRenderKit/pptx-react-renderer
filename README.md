@@ -161,6 +161,14 @@ pnpm run pack:check
 pnpm run test:browser
 ```
 
+To regenerate the committed sanitized golden fixture from a local source deck:
+
+```bash
+PPTX_COMPLEX_SOURCE="/absolute/path/to/source-deck.pptx" pnpm run fixtures:sanitize-complex
+```
+
+The sanitized fixture preserves slide structure, SmartArt/diagram XML, tables, groups, relationships, and media slots while replacing sensitive text, metadata, and image payloads.
+
 ## Versioning And Releases
 
 - Follow semver.
@@ -175,6 +183,7 @@ pnpm run test:browser
 - unit and parser/renderer regression tests run in `vitest` with `jsdom`
 - committed `.pptx` fixtures under `test/fixtures/real/` cover realistic parse and render paths
 - a Playwright smoke test renders a real fixture in Chromium against the built package
+- a sanitized golden deck derived from a complex local source presentation is committed so CI can exercise realistic SmartArt, tables, groups, and mixed media without depending on private files
 
 ## Contributing
 

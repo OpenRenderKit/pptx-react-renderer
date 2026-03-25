@@ -13,11 +13,14 @@ test("renders the committed PPTX fixture in a real browser", async ({ page }) =>
       message: "browser harness should finish rendering",
       },
     )
-    .toMatchObject({ state: "ready", slideCount: 2 });
+    .toMatchObject({ state: "ready", slideCount: 12 });
 
-  await expect(page.locator(".pptx-slide")).toHaveCount(2);
-  await expect(page.locator(".pptx-slide-number")).toHaveCount(2);
-  await expect(page.locator(".pptx-text-element")).toContainText(["Quarterly Review"]);
-  await expect(page.locator(".pptx-image-element img")).toHaveCount(1);
-  await expect(page.locator(".pptx-graphic-frame")).toContainText("Chart");
+  await expect(page.locator(".pptx-slide")).toHaveCount(12);
+  await expect(page.locator(".pptx-slide-number")).toHaveCount(12);
+  await expect(page.locator(".pptx-text-element")).toContainText([
+    "OpenBridge",
+    "Evaluation Matrix",
+  ]);
+  await expect(page.locator(".pptx-image-element img")).toHaveCount(16);
+  await expect(page.locator(".pptx-graphic-frame")).toHaveCount(6);
 });

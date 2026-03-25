@@ -11,7 +11,7 @@ async function main() {
   }
 
   try {
-    const response = await fetch("/test/fixtures/real/basic-preview.pptx");
+    const response = await fetch("/test/fixtures/real/complex-sanitized.pptx");
     const arrayBuffer = await response.arrayBuffer();
 
     await renderPptx(arrayBuffer, {

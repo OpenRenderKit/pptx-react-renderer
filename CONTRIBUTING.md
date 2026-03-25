@@ -8,6 +8,14 @@ pnpm run fixtures:generate
 pnpm run verify
 ```
 
+To refresh the committed sanitized regression deck from a local source presentation:
+
+```bash
+PPTX_COMPLEX_SOURCE="/absolute/path/to/source-deck.pptx" pnpm run fixtures:sanitize-complex
+```
+
+This command is intended for maintainers. CI uses the committed sanitized fixture and does not need access to the original source deck.
+
 ## Development Workflow
 
 - keep changes focused and backward-compatible unless the change is intentionally breaking
@@ -17,6 +25,7 @@ pnpm run verify
 - run `pnpm run verify` before opening a pull request
 - run `pnpm run pack:check` if you change package metadata or published files
 - run `pnpm run test:browser` when you change browser-facing render behavior, bundling, or fixture handling
+- if you update the complex regression deck, rerun `pnpm run verify` and `pnpm run test:browser` before pushing
 
 ## Release Process
 

@@ -51,6 +51,7 @@
     "browser:bundle-harness": "esbuild test/browser/harness/runner.ts --bundle --platform=browser --format=esm --outfile=test/browser/harness/bundle.js",
     "clean": "rm -rf dist coverage",
     "fixtures:generate": "node scripts/generate-test-fixtures.mjs",
+    "fixtures:sanitize-complex": "node scripts/sanitize-complex-fixture.mjs",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run test:unit",
     "test:unit": "vitest run",
