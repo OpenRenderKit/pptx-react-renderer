@@ -1,0 +1,54 @@
+{
+  "caseId": "diagram-fallback",
+  "compared": true,
+  "selectedSlides": [
+    2,
+    10
+  ],
+  "slides": [
+    {
+      "slide": 2,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 10,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "maxDiffRatio": 0,
+  "meanDiffRatio": 0,
+  "topSlides": [
+    {
+      "slide": 2,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 10,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.7671430121527778,
+    "meanObservedDiffRatio": 0.7101139322916667
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.7671430121527778,
+    "meanObservedDiffRatio": 0.7101139322916667
+  }
+}

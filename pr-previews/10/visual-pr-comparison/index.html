@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visual PR Comparison</title>
+    <style>
+      :root {
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        color-scheme: light;
+        background: #f5f7fb;
+        color: #152034;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 32px; }
+      main { display: grid; gap: 24px; }
+      .case { background: #fff; border-radius: 20px; padding: 24px; box-shadow: 0 24px 60px rgba(20, 32, 51, 0.08); }
+      .case-header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+      .stats { display: grid; gap: 6px; text-align: right; color: #42526b; }
+      .slide-card { border-top: 1px solid #e3e8f0; padding-top: 20px; margin-top: 20px; }
+      .images { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+      figure { margin: 0; background: #f7f9fc; border: 1px solid #dbe3ef; border-radius: 16px; padding: 12px; }
+      img { display: block; width: 100%; height: auto; border-radius: 10px; background: white; }
+      figcaption { margin-top: 10px; text-align: center; color: #42526b; font-size: 14px; }
+      @media (max-width: 1100px) { .images { grid-template-columns: 1fr; } .case-header { flex-direction: column; } .stats { text-align: left; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="case">
+        <h1>Visual PR Comparison</h1>
+        <p>Current PR renderer output compared against the latest successful <code>main</code> renderer artifact.</p>
+      </section>
+      
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>bullets-numbering</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./bullets-numbering/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./bullets-numbering/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./bullets-numbering/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>complex-sanitized</h2>
+              <p>Compared slides: 1, 4, 5, 8</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 4</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-04.baseline.png" alt="Baseline slide 4" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-04.current.png" alt="Current slide 4" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-04.diff.png" alt="Diff slide 4" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 5</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-05.baseline.png" alt="Baseline slide 5" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-05.current.png" alt="Current slide 5" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-05.diff.png" alt="Diff slide 5" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 8</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-08.baseline.png" alt="Baseline slide 8" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-08.current.png" alt="Current slide 8" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./complex-sanitized/slide-08.diff.png" alt="Diff slide 8" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>diagram-fallback</h2>
+              <p>Compared slides: 2, 10</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 2</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./diagram-fallback/slide-02.baseline.png" alt="Baseline slide 2" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./diagram-fallback/slide-02.current.png" alt="Current slide 2" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./diagram-fallback/slide-02.diff.png" alt="Diff slide 2" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 10</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./diagram-fallback/slide-10.baseline.png" alt="Baseline slide 10" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./diagram-fallback/slide-10.current.png" alt="Current slide 10" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./diagram-fallback/slide-10.diff.png" alt="Diff slide 10" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>group-transform</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./group-transform/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./group-transform/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./group-transform/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>image-cropping</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./image-cropping/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./image-cropping/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./image-cropping/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>image-placement</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./image-placement/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./image-placement/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./image-placement/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>nested-groups</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./nested-groups/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./nested-groups/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./nested-groups/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>paragraph-spacing</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./paragraph-spacing/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./paragraph-spacing/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./paragraph-spacing/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>slop-sample</h2>
+              <p>Compared slides: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 2</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-02.baseline.png" alt="Baseline slide 2" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-02.current.png" alt="Current slide 2" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-02.diff.png" alt="Diff slide 2" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 3</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-03.baseline.png" alt="Baseline slide 3" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-03.current.png" alt="Current slide 3" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-03.diff.png" alt="Diff slide 3" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 4</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-04.baseline.png" alt="Baseline slide 4" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-04.current.png" alt="Current slide 4" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-04.diff.png" alt="Diff slide 4" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+
+            <section class="slide-card">
+              <header>
+                <h3>Slide 5</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-05.baseline.png" alt="Baseline slide 5" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-05.current.png" alt="Current slide 5" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./slop-sample/slide-05.diff.png" alt="Diff slide 5" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>table-layout</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./table-layout/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./table-layout/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./table-layout/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>text-insets-anchor</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./text-insets-anchor/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./text-insets-anchor/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./text-insets-anchor/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>text-layout</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./text-layout/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./text-layout/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./text-layout/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>theme-colors</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./theme-colors/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./theme-colors/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./theme-colors/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>theme-luminance</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./theme-luminance/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./theme-luminance/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./theme-luminance/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+
+        <section class="case">
+          <header class="case-header">
+            <div>
+              <h2>unsupported-chart</h2>
+              <p>Compared slides: 1</p>
+            </div>
+            <div class="stats">
+              <span>Max diff: 0.0000</span>
+              <span>Mean diff: 0.0000</span>
+            </div>
+          </header>
+          
+            <section class="slide-card">
+              <header>
+                <h3>Slide 1</h3>
+                <p>Diff ratio 0.0000</p>
+              </header>
+              <div class="images">
+                <figure>
+                  <img loading="lazy" src="./unsupported-chart/slide-01.baseline.png" alt="Baseline slide 1" />
+                  <figcaption>Main baseline</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./unsupported-chart/slide-01.current.png" alt="Current slide 1" />
+                  <figcaption>Current PR</figcaption>
+                </figure>
+                <figure>
+                  <img loading="lazy" src="./unsupported-chart/slide-01.diff.png" alt="Diff slide 1" />
+                  <figcaption>Diff</figcaption>
+                </figure>
+              </div>
+            </section>
+          
+        </section>
+      
+    </main>
+  </body>
+</html>
