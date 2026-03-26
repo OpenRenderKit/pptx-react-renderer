@@ -10,7 +10,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
+  contents: write
   actions: read
   issues: write
   pull-requests: write
@@ -118,8 +118,20 @@ jobs:
           rm -rf .tmp/visual-baseline
           mkdir -p .tmp/visual-baseline
           gh run download "${{ steps.resolve_visual_baseline.outputs.run_id }}" --name visual-regression-artifacts --dir .tmp/visual-baseline
+      - name: Resolve Pages site URL
+        id: resolve_pages_site
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SITE_URL="$(gh api repos/${{ github.repository }}/pages --jq '.html_url // ""' 2>/dev/null || true)"
+          echo "url=$SITE_URL" >> "$GITHUB_OUTPUT"
       - name: Build PR vs main visual comparison
         if: always() && github.event_name == 'pull_request' && steps.resolve_visual_baseline.outputs.run_id != ''
+        env:
+          PPTX_VISUAL_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PPTX_VISUAL_PR_NUMBER: ${{ github.event.pull_request.number }}
+          PPTX_VISUAL_PAGES_BASE_URL: ${{ steps.resolve_pages_site.outputs.url }}
         run: pnpm run fixtures:compare-visual-baseline
       - name: Upload PR visual comparison artifact
         if: always() && github.event_name == 'pull_request' && steps.resolve_visual_baseline.outputs.run_id != ''
@@ -127,6 +139,33 @@ jobs:
         with:
           name: visual-pr-comparison
           path: test-results/visual-pr-comparison
+      - name: Checkout gh-pages
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && steps.resolve_pages_site.outputs.url != ''
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: .tmp/pages-site
+      - name: Publish PR preview site
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && steps.resolve_pages_site.outputs.url != ''
+        run: |
+          PREVIEW_DIR=".tmp/pages-site/pr-previews/${{ github.event.pull_request.number }}"
+          rm -rf "$PREVIEW_DIR"
+          mkdir -p "$PREVIEW_DIR"
+          cp -R test-results/visual-regression "$PREVIEW_DIR/visual-regression"
+          cp -R test-results/visual-pr-comparison "$PREVIEW_DIR/visual-pr-comparison"
+          touch .tmp/pages-site/.nojekyll
+          node scripts/write-pages-index.mjs .tmp/pages-site
+      - name: Commit PR preview site
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && steps.resolve_pages_site.outputs.url != ''
+        run: |
+          cd .tmp/pages-site
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if git status --short | grep . >/dev/null; then
+            git add .
+            git commit -m "Update PR #${{ github.event.pull_request.number }} previews"
+            git push origin gh-pages
+          fi
       - name: Append PR visual diff summary
         if: always() && github.event_name == 'pull_request' && steps.resolve_visual_baseline.outputs.run_id != ''
         run: cat test-results/visual-pr-comparison/comment.md >> "$GITHUB_STEP_SUMMARY"

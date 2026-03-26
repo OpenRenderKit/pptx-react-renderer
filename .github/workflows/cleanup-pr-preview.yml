@@ -1,0 +1,49 @@
+name: cleanup-pr-preview
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Resolve Pages site URL
+        id: resolve_pages_site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SITE_URL="$(gh api repos/${{ github.repository }}/pages --jq '.html_url // ""' 2>/dev/null || true)"
+          echo "url=$SITE_URL" >> "$GITHUB_OUTPUT"
+      - name: Checkout gh-pages
+        if: steps.resolve_pages_site.outputs.url != ''
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: .tmp/pages-site
+      - name: Remove PR preview
+        if: steps.resolve_pages_site.outputs.url != ''
+        run: |
+          rm -rf ".tmp/pages-site/pr-previews/${{ github.event.pull_request.number }}"
+          node scripts/write-pages-index.mjs .tmp/pages-site
+          touch .tmp/pages-site/.nojekyll
+      - name: Commit cleanup
+        if: steps.resolve_pages_site.outputs.url != ''
+        run: |
+          cd .tmp/pages-site
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if git status --short | grep . >/dev/null; then
+            git add .
+            git commit -m "Remove PR #${{ github.event.pull_request.number }} preview"
+            git push origin gh-pages
+          fi

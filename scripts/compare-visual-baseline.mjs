@@ -125,6 +125,7 @@ for (const caseId of caseDirs) {
 
 comparison.comparedCases = comparison.cases.filter((entry) => entry.compared).length;
 comparison.totalCases = comparison.cases.length;
+comparison.changedCases = comparison.cases.filter((entry) => entry.compared && entry.maxDiffRatio > 0).length;
 comparison.worstCases = [...comparison.cases]
   .filter((entry) => entry.compared)
   .sort((left, right) => right.maxDiffRatio - left.maxDiffRatio)
@@ -141,14 +142,43 @@ await writeFile(path.join(outputRoot, "index.html"), buildHtml(comparison));
 
 function buildComment(summary) {
   const lines = ["<!-- pptx-react-renderer-visual-pr-comment -->", "## Visual PR Diff", ""];
+  const runUrl = process.env.PPTX_VISUAL_RUN_URL;
+  const pagesBaseUrl = process.env.PPTX_VISUAL_PAGES_BASE_URL;
+  const prNumber = process.env.PPTX_VISUAL_PR_NUMBER;
+  const reportBaseUrl =
+    pagesBaseUrl && prNumber
+      ? `${pagesBaseUrl.replace(/\/$/, "")}/pr-previews/${prNumber}`
+      : undefined;
 
   if (summary.comparedCases === 0) {
     lines.push("No comparable visual baseline from `main` was found for this PR run.");
+    if (runUrl) {
+      lines.push("");
+      lines.push(`[Open workflow run](${runUrl})`);
+    }
     return lines.join("\n");
   }
 
-  lines.push(`Compared \`${summary.comparedCases}\` visual cases against the latest successful \`main\` visual artifact.`);
+  if (summary.changedCases === 0) {
+    lines.push(
+      `Compared \`${summary.comparedCases}\` visual cases against the latest successful \`main\` visual artifact and detected no renderer-output changes.`,
+    );
+  } else {
+    lines.push(
+      `Compared \`${summary.comparedCases}\` visual cases against the latest successful \`main\` visual artifact and found \`${summary.changedCases}\` changed cases.`,
+    );
+  }
   lines.push("");
+
+  if (runUrl) {
+    lines.push(`- [Workflow run](${runUrl})`);
+  }
+  if (reportBaseUrl) {
+    lines.push(`- [PR vs main report](${reportBaseUrl}/visual-pr-comparison/index.html)`);
+    lines.push(`- [Office reference vs current report](${reportBaseUrl}/visual-regression/index.html)`);
+  }
+  lines.push("");
+
   lines.push("| Case | Max Diff | Mean Diff | Top Changed Slides |");
   lines.push("| --- | ---: | ---: | --- |");
 
@@ -167,7 +197,33 @@ function buildComment(summary) {
   }
 
   lines.push("");
-  lines.push("Artifacts include an HTML side-by-side report under `test-results/visual-pr-comparison/index.html`.");
+
+  const previewCases = summary.worstCases.filter((entry) => entry.maxDiffRatio > 0).slice(0, 3);
+  if (previewCases.length > 0 && reportBaseUrl) {
+    lines.push("### Preview Slides");
+    lines.push("");
+
+    for (const entry of previewCases) {
+      const caseSummary = summary.cases.find((item) => item.caseId === entry.caseId);
+      const topSlide = caseSummary.topSlides[0];
+      const slideLabel = `slide-${String(topSlide.slide).padStart(2, "0")}`;
+      const caseUrl = `${reportBaseUrl}/visual-pr-comparison/${entry.caseId}`;
+      lines.push(`**${entry.caseId}** slide ${topSlide.slide} ([open case](${caseUrl}/comparison.json))`);
+      lines.push("");
+      lines.push("<table>");
+      lines.push("<tr><th>Main</th><th>PR</th><th>Diff</th></tr>");
+      lines.push(
+        `<tr><td><img src="${caseUrl}/${slideLabel}.baseline.png" width="260" alt="Main baseline ${entry.caseId} slide ${topSlide.slide}"></td><td><img src="${caseUrl}/${slideLabel}.current.png" width="260" alt="PR current ${entry.caseId} slide ${topSlide.slide}"></td><td><img src="${caseUrl}/${slideLabel}.diff.png" width="260" alt="Diff ${entry.caseId} slide ${topSlide.slide}"></td></tr>`,
+      );
+      lines.push("</table>");
+      lines.push("");
+    }
+  } else if (reportBaseUrl) {
+    lines.push("No renderer deltas were detected in this PR. Open the published reports for full slide-by-slide inspection.");
+    lines.push("");
+  }
+
+  lines.push("Artifacts include HTML side-by-side reports under `visual-regression-artifacts` and `visual-pr-comparison`.");
   return lines.join("\n");
 }
 

@@ -58,6 +58,7 @@
     "fixtures:visual-report": "node scripts/write-visual-report.mjs",
     "fixtures:post-pr-visual-comment": "node scripts/post-pr-visual-comment.mjs",
     "release:plan": "node scripts/release-plan.mjs",
+    "pages:write-index": "node scripts/write-pages-index.mjs",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run test:unit",
     "test:unit": "vitest run",
