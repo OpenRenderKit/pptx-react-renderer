@@ -195,6 +195,108 @@ describe("pptx-react-renderer", () => {
     expect(container.textContent).toContain("Chart");
   });
 
+  it("parses graphicFrame tables into styled table elements", async () => {
+    const buffer = await createTestPptx([
+      {
+        extraSpTreeChildren: [
+          `<p:graphicFrame>
+            <p:xfrm>
+              <a:off x="914400" y="914400"/>
+              <a:ext cx="3657600" cy="1828800"/>
+            </p:xfrm>
+            <a:graphic>
+              <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+                <a:tbl>
+                  <a:tblPr firstRow="1">
+                    <a:solidFill><a:schemeClr val="lt1"><a:lumMod val="95000"/></a:schemeClr></a:solidFill>
+                  </a:tblPr>
+                  <a:tblGrid>
+                    <a:gridCol w="1828800"/>
+                    <a:gridCol w="1828800"/>
+                  </a:tblGrid>
+                  <a:tr h="457200">
+                    <a:tc>
+                      <a:txBody>
+                        <a:bodyPr/>
+                        <a:lstStyle/>
+                        <a:p>
+                          <a:pPr algn="ctr"><a:buNone/></a:pPr>
+                          <a:r>
+                            <a:rPr sz="1800" b="1"><a:solidFill><a:schemeClr val="lt1"/></a:solidFill></a:rPr>
+                            <a:t>Heading</a:t>
+                          </a:r>
+                        </a:p>
+                      </a:txBody>
+                      <a:tcPr anchor="ctr" marL="12700" marR="12700" marT="12700" marB="12700">
+                        <a:solidFill><a:schemeClr val="accent1"/></a:solidFill>
+                        <a:lnL w="12700"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:lnL>
+                        <a:lnR w="12700"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:lnR>
+                        <a:lnT w="12700"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:lnT>
+                        <a:lnB w="12700"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:lnB>
+                      </a:tcPr>
+                    </a:tc>
+                    <a:tc>
+                      <a:txBody>
+                        <a:bodyPr/>
+                        <a:lstStyle/>
+                        <a:p>
+                          <a:r>
+                            <a:rPr sz="1600"><a:solidFill><a:schemeClr val="dk1"/></a:solidFill></a:rPr>
+                            <a:t>Body</a:t>
+                          </a:r>
+                        </a:p>
+                      </a:txBody>
+                      <a:tcPr anchor="b" gridSpan="1">
+                        <a:solidFill><a:schemeClr val="lt1"><a:lumMod val="95000"/></a:schemeClr></a:solidFill>
+                      </a:tcPr>
+                    </a:tc>
+                  </a:tr>
+                </a:tbl>
+              </a:graphicData>
+            </a:graphic>
+          </p:graphicFrame>`,
+        ],
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    const table = slides[0].elements[0];
+
+    expect(table).toMatchObject({
+      type: "table",
+      x: 96,
+      y: 96,
+      width: 384,
+      height: 192,
+      columnWidths: [192, 192],
+      rows: [
+        {
+          height: 48,
+          cells: [
+            expect.objectContaining({
+              content: "Heading",
+              backgroundColor: "#4472c4",
+              verticalAlign: "middle",
+              defaultColor: "#ffffff",
+            }),
+            expect.objectContaining({
+              content: "Body",
+              verticalAlign: "bottom",
+              backgroundColor: "#f2f2f2",
+            }),
+          ],
+        },
+      ],
+    });
+
+    const container = document.createElement("div");
+    renderSlides(slides, { container });
+
+    expect(container.querySelector(".pptx-table-element")).not.toBeNull();
+    expect(container.textContent).toContain("Heading");
+    expect(container.textContent).toContain("Body");
+  });
+
   it("parses grouped children using group transform coordinates and renders them", async () => {
     const buffer = await createTestPptx([
       {

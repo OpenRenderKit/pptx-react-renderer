@@ -104,7 +104,7 @@ Relevant OOXML:
 Current state:
 
 - `graphicFrame` type detection exists in [`src/parser.ts`](/Users/sid/Documents/Coding/pptx-react-renderer/src/parser.ts).
-- Tables inside graphic frames are not rendered as real tables.
+- DrawingML tables inside `graphicFrame` are now parsed into real table elements instead of placeholder frames.
 - Charts are placeholders in [`src/renderer.ts`](/Users/sid/Documents/Coding/pptx-react-renderer/src/renderer.ts).
 - SmartArt diagrams partially use `drawing*.xml` shapes but still fall back often.
 
@@ -140,9 +140,9 @@ Relevant OOXML:
 
 Current state:
 
-- [`src/parser.ts`](/Users/sid/Documents/Coding/pptx-react-renderer/src/parser.ts) currently extracts mostly plain text content from table cells.
-- Table widths, heights, margins, borders, and styles are not modeled well.
-- Embedded tables inside `graphicFrame` still render as placeholders.
+- [`src/parser.ts`](/Users/sid/Documents/Coding/pptx-react-renderer/src/parser.ts) now extracts column widths, row heights, cell fills, borders, margins, vertical alignment, and paragraph content.
+- [`src/renderer.ts`](/Users/sid/Documents/Coding/pptx-react-renderer/src/renderer.ts) now renders embedded DrawingML tables as real HTML tables.
+- Table style matrix usage, banding semantics, merged-cell continuation rules, and rich table text layout are still incomplete.
 
 Impact:
 
@@ -202,7 +202,7 @@ Impact:
 ## Current Priority Order
 
 1. Group transform fidelity and nested content preservation.
-2. Graphic-frame tables and chart model extraction.
+2. Chart model extraction and richer table style fidelity.
 3. Theme color transforms and style reference resolution.
 4. Text layout and font/theme fidelity.
 5. SmartArt layout fidelity beyond fallback shape rendering.

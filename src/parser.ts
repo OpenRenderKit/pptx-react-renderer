@@ -4,6 +4,7 @@ import type {
   PptxParseResult,
   SlideElement,
   TextElement,
+  Paragraph,
   ImageElement,
   ShapeElement,
   GroupElement,
@@ -131,6 +132,11 @@ async function loadThemeColors(zip: JSZip): Promise<Map<string, string>> {
           }
         }
       }
+
+      if (themeColors.has("lt1")) themeColors.set("bg1", themeColors.get("lt1")!);
+      if (themeColors.has("dk1")) themeColors.set("tx1", themeColors.get("dk1")!);
+      if (themeColors.has("lt2")) themeColors.set("bg2", themeColors.get("lt2")!);
+      if (themeColors.has("dk2")) themeColors.set("tx2", themeColors.get("dk2")!);
     }
   } catch (error) {
     console.warn("Failed to load theme colors:", error);
@@ -347,7 +353,7 @@ async function parseSpTreeChildren(
   for (const child of Array.from(container.children)) {
     switch (child.localName) {
       case "sp": {
-        const element = parseShape(child, zIndex.value++, transform);
+        const element = parseShape(child, zIndex.value++, context.themeColors, transform);
         if (element) elements.push(element);
         break;
       }
@@ -390,7 +396,12 @@ async function parseSpTreeChildren(
 /**
  * Parse a shape element
  */
-function parseShape(sp: Element, zIndex: number, transform?: ElementTransform): SlideElement | null {
+function parseShape(
+  sp: Element,
+  zIndex: number,
+  themeColors: Map<string, string>,
+  transform?: ElementTransform,
+): SlideElement | null {
   const xfrm = sp.querySelector(":scope > spPr > xfrm");
   if (!xfrm) return null;
 
@@ -399,13 +410,13 @@ function parseShape(sp: Element, zIndex: number, transform?: ElementTransform): 
   // Check if it's a text element
   const txBody = sp.querySelector("txBody");
   if (txBody) {
-    return parseTextElement(txBody, position, zIndex);
+    return parseTextElement(txBody, position, zIndex, themeColors);
   }
 
   // Check if it's a table
   const tbl = sp.querySelector("tbl");
   if (tbl) {
-    return parseTable(tbl, position, zIndex);
+    return parseTable(tbl, position, zIndex, themeColors);
   }
 
   // Otherwise it's a shape
@@ -417,8 +428,8 @@ function parseShape(sp: Element, zIndex: number, transform?: ElementTransform): 
     ...position,
     zIndex,
     shapeType,
-    fillColor: parseFillColor(sp),
-    strokeColor: parseStrokeColor(sp),
+    fillColor: parseFillColor(sp, themeColors),
+    strokeColor: parseStrokeColor(sp, themeColors),
     strokeWidth: parseStrokeWidth(sp),
   };
 
@@ -432,16 +443,17 @@ function parseTextElement(
   txBody: Element,
   position: { x: number; y: number; width: number; height: number },
   zIndex: number,
+  themeColors: Map<string, string>,
 ): TextElement {
   // Get default properties
   const defaultFontSize = parseFontSize(txBody);
   const defaultFontFamily = parseFontFamily(txBody);
-  const defaultColor = parseTextColor(txBody);
+  const defaultColor = parseTextColor(txBody, themeColors);
 
   // Parse paragraphs with rich text runs
-  const paragraphs: import("./types").Paragraph[] = [];
+  const paragraphs: Paragraph[] = [];
   txBody.querySelectorAll("p").forEach((p) => {
-    const paragraph = parseParagraph(p);
+    const paragraph = parseParagraph(p, themeColors);
     if (paragraph.runs.length > 0) {
       paragraphs.push(paragraph);
     }
@@ -501,7 +513,7 @@ function parseTextElement(
 /**
  * Parse a paragraph with text runs
  */
-function parseParagraph(p: Element): import("./types").Paragraph {
+function parseParagraph(p: Element, themeColors: Map<string, string>): Paragraph {
   const runs: import("./types").ContentElement[] = [];
 
   // Get all child nodes of the paragraph
@@ -512,14 +524,14 @@ function parseParagraph(p: Element): import("./types").Paragraph {
 
       // Parse text runs (<a:r> or <r>)
       if (tagName === "r" || tagName.endsWith(":r")) {
-        const run = parseTextRun(el);
+        const run = parseTextRun(el, themeColors);
         if (run.text || run.text === "") {
           runs.push(run);
         }
       }
       // Parse text fields (<a:fld> or <fld>)
       else if (tagName === "fld" || tagName.endsWith(":fld")) {
-        const field = parseTextField(el);
+        const field = parseTextField(el, themeColors);
         if (field.text) {
           runs.push(field);
         }
@@ -535,7 +547,7 @@ function parseParagraph(p: Element): import("./types").Paragraph {
   const pPr = p.querySelector("pPr");
 
   // Parse comprehensive bullet formatting
-  const bulletInfo = parseBulletInfo(pPr);
+  const bulletInfo = parseBulletInfo(pPr, themeColors);
 
   return {
     runs,
@@ -554,14 +566,14 @@ function parseParagraph(p: Element): import("./types").Paragraph {
     spaceAfter: parseParagraphSpaceAfter(pPr),
     lineSpacing: parseParagraphLineSpacing(pPr),
     tabStops: parseTabStops(pPr),
-    defaultRunProps: parseDefaultRunProps(pPr),
+    defaultRunProps: parseDefaultRunProps(pPr, themeColors),
   };
 }
 
 /**
  * Parse a single text run with formatting
  */
-function parseTextRun(r: Element): import("./types").TextRun {
+function parseTextRun(r: Element, themeColors: Map<string, string>): import("./types").TextRun {
   const text = r.querySelector("t")?.textContent || "";
 
   // Get run properties
@@ -575,7 +587,7 @@ function parseTextRun(r: Element): import("./types").TextRun {
     bold: hasRunFormatting(rPr, "b"),
     italic: hasRunFormatting(rPr, "i"),
     underline: parseRunUnderline(rPr),
-    color: parseRunColor(rPr),
+    color: parseRunColor(rPr, themeColors),
     highlight: parseRunHighlight(rPr),
     baseline: parseRunBaseline(rPr),
   };
@@ -584,7 +596,10 @@ function parseTextRun(r: Element): import("./types").TextRun {
 /**
  * Parse a text field element (for slide numbers, dates, etc.)
  */
-function parseTextField(fld: Element): import("./types").TextField {
+function parseTextField(
+  fld: Element,
+  themeColors: Map<string, string>,
+): import("./types").TextField {
   const text = fld.querySelector("t")?.textContent || "";
   const fieldType = fld.getAttribute("type") || undefined;
 
@@ -600,14 +615,17 @@ function parseTextField(fld: Element): import("./types").TextField {
     bold: hasRunFormatting(rPr, "b"),
     italic: hasRunFormatting(rPr, "i"),
     underline: parseRunUnderline(rPr),
-    color: parseRunColor(rPr),
+    color: parseRunColor(rPr, themeColors),
   };
 }
 
 /**
  * Comprehensive bullet information parsing
  */
-function parseBulletInfo(pPr: Element | null): {
+function parseBulletInfo(
+  pPr: Element | null,
+  themeColors: Map<string, string>,
+): {
   hasBullet: boolean;
   char?: string;
   font?: string;
@@ -643,10 +661,7 @@ function parseBulletInfo(pPr: Element | null): {
     // Get bullet color
     const buClr = pPr.querySelector("buClr srgbClr, buClr schemeClr");
     let color: string | undefined;
-    if (buClr) {
-      const srgb = buClr.getAttribute("val");
-      if (srgb) color = `#${srgb}`;
-    }
+    if (buClr) color = parseColorValue(buClr, themeColors);
 
     return {
       hasBullet: true,
@@ -743,7 +758,10 @@ function parseTabStops(pPr: Element | null): import("./types").TabStop[] | undef
 /**
  * Parse default run properties from paragraph
  */
-function parseDefaultRunProps(pPr: Element | null): import("./types").TextRun | undefined {
+function parseDefaultRunProps(
+  pPr: Element | null,
+  themeColors: Map<string, string>,
+): import("./types").TextRun | undefined {
   if (!pPr) return undefined;
 
   const defRPr = pPr.querySelector("defRPr");
@@ -757,7 +775,7 @@ function parseDefaultRunProps(pPr: Element | null): import("./types").TextRun | 
     bold: hasRunFormatting(defRPr, "b"),
     italic: hasRunFormatting(defRPr, "i"),
     underline: parseRunUnderline(defRPr),
-    color: parseRunColor(defRPr),
+    color: parseRunColor(defRPr, themeColors),
   };
 }
 
@@ -815,16 +833,12 @@ function parseRunUnderline(rPr: Element | null): boolean {
 /**
  * Parse run color
  */
-function parseRunColor(rPr: Element | null): string | undefined {
+function parseRunColor(rPr: Element | null, themeColors: Map<string, string>): string | undefined {
   if (!rPr) return undefined;
 
   const solidFill = rPr.querySelector("solidFill");
   if (solidFill) {
-    const srgbClr = solidFill.querySelector("srgbClr");
-    if (srgbClr) {
-      const val = srgbClr.getAttribute("val");
-      if (val) return `#${val}`;
-    }
+    return parseColorValue(solidFill, themeColors);
   }
 
   return undefined;
@@ -1138,20 +1152,29 @@ function parseBackground(
 /**
  * Parse table element
  */
-function parseTable(tbl: Element, position: any, zIndex: number): TableElement {
+function parseTable(
+  tbl: Element,
+  position: { x: number; y: number; width: number; height: number },
+  zIndex: number,
+  themeColors: Map<string, string>,
+): TableElement {
+  const columnWidths = Array.from(tbl.querySelectorAll(":scope > tblGrid > gridCol")).map((gridCol) =>
+    emuToPx(parseInt(gridCol.getAttribute("w") || "0", 10)),
+  );
   const rows: TableRow[] = [];
 
-  tbl.querySelectorAll("tr").forEach((tr) => {
+  tbl.querySelectorAll(":scope > tr").forEach((tr) => {
     const cells: TableCell[] = [];
 
-    tr.querySelectorAll("tc").forEach((tc) => {
-      const cell: TableCell = {
-        content: extractTextContent(tc.querySelector("txBody") || tc),
-      };
-      cells.push(cell);
+    tr.querySelectorAll(":scope > tc").forEach((tc) => {
+      const cell = parseTableCell(tc, themeColors);
+      if (cell) cells.push(cell);
     });
 
-    rows.push({ cells });
+    rows.push({
+      cells,
+      height: emuToPx(parseInt(tr.getAttribute("h") || "0", 10)),
+    });
   });
 
   return {
@@ -1159,7 +1182,112 @@ function parseTable(tbl: Element, position: any, zIndex: number): TableElement {
     ...position,
     zIndex,
     rows,
+    columnWidths,
+    backgroundColor: parseTableBackground(tbl, themeColors),
   };
+}
+
+function parseTableCell(tc: Element, themeColors: Map<string, string>): TableCell | null {
+  const txBody = tc.querySelector(":scope > txBody");
+  const tcPr = tc.querySelector(":scope > tcPr");
+  const paragraphs = txBody
+    ? Array.from(txBody.querySelectorAll(":scope > p"))
+        .map((p) => parseParagraph(p, themeColors))
+        .filter((p) => p.runs.length > 0)
+    : [];
+
+  return {
+    content: txBody ? extractTextContent(txBody) : extractTextContent(tc),
+    paragraphs: paragraphs.length > 0 ? paragraphs : undefined,
+    defaultFontSize: txBody ? parseFontSize(txBody) : undefined,
+    defaultFontFamily: txBody ? parseFontFamily(txBody) : undefined,
+    defaultColor: txBody ? parseTextColor(txBody, themeColors) : undefined,
+    align: txBody ? parseTextAlign(txBody) : undefined,
+    verticalAlign: parseTableCellVerticalAlign(tcPr),
+    padding: parseTableCellPadding(tcPr),
+    rowSpan: parseOptionalInt(tcPr?.getAttribute("rowSpan")),
+    colSpan: parseOptionalInt(tcPr?.getAttribute("gridSpan")),
+    backgroundColor: tcPr ? parseTableCellFill(tcPr, themeColors) : undefined,
+    borders: tcPr ? parseTableCellBorders(tcPr, themeColors) : undefined,
+  };
+}
+
+function parseTableCellVerticalAlign(tcPr: Element | null): TableCell["verticalAlign"] {
+  const anchor = tcPr?.getAttribute("anchor");
+  if (anchor === "ctr") return "middle";
+  if (anchor === "b") return "bottom";
+  return "top";
+}
+
+function parseTableCellPadding(tcPr: Element | null): TableCell["padding"] | undefined {
+  if (!tcPr) return undefined;
+
+  const left = parseOptionalInt(tcPr.getAttribute("marL"));
+  const right = parseOptionalInt(tcPr.getAttribute("marR"));
+  const top = parseOptionalInt(tcPr.getAttribute("marT"));
+  const bottom = parseOptionalInt(tcPr.getAttribute("marB"));
+
+  if (left === undefined && right === undefined && top === undefined && bottom === undefined) {
+    return undefined;
+  }
+
+  return {
+    left: left !== undefined ? left / 12700 : undefined,
+    right: right !== undefined ? right / 12700 : undefined,
+    top: top !== undefined ? top / 12700 : undefined,
+    bottom: bottom !== undefined ? bottom / 12700 : undefined,
+  };
+}
+
+function parseTableCellFill(tcPr: Element, themeColors: Map<string, string>): string | undefined {
+  const solidFill = tcPr.querySelector(":scope > solidFill");
+  return solidFill ? parseColorValue(solidFill, themeColors) : undefined;
+}
+
+function parseTableBackground(tbl: Element, themeColors: Map<string, string>): string | undefined {
+  const solidFill = tbl.querySelector(":scope > tblPr > solidFill");
+  return solidFill ? parseColorValue(solidFill, themeColors) : undefined;
+}
+
+function parseTableCellBorders(
+  tcPr: Element,
+  themeColors: Map<string, string>,
+): TableCell["borders"] | undefined {
+  const borders: NonNullable<TableCell["borders"]> = {};
+
+  const left = parseTableBorder(tcPr.querySelector(":scope > lnL"), themeColors);
+  const right = parseTableBorder(tcPr.querySelector(":scope > lnR"), themeColors);
+  const top = parseTableBorder(tcPr.querySelector(":scope > lnT"), themeColors);
+  const bottom = parseTableBorder(tcPr.querySelector(":scope > lnB"), themeColors);
+
+  if (left) borders.left = left;
+  if (right) borders.right = right;
+  if (top) borders.top = top;
+  if (bottom) borders.bottom = bottom;
+
+  return Object.keys(borders).length > 0 ? borders : undefined;
+}
+
+function parseTableBorder(ln: Element | null, themeColors: Map<string, string>) {
+  if (!ln || ln.querySelector(":scope > noFill")) return undefined;
+
+  return {
+    color: parseColorValue(ln, themeColors),
+    width: parseOptionalInt(ln.getAttribute("w")) ? parseInt(ln.getAttribute("w") || "0", 10) / 12700 : undefined,
+    style: parseTableBorderStyle(ln),
+  };
+}
+
+function parseTableBorderStyle(ln: Element): string | undefined {
+  const dash = ln.querySelector(":scope > prstDash")?.getAttribute("val");
+  if (dash === "sysDot" || dash === "dot") return "dotted";
+  if (dash === "dash" || dash === "sysDash") return "dashed";
+  return "solid";
+}
+
+function parseOptionalInt(value: string | null | undefined): number | undefined {
+  if (!value) return undefined;
+  return parseInt(value, 10);
 }
 
 /**
@@ -1308,51 +1436,33 @@ function _hasFormatting(txBody: Element, tag: string): boolean {
 /**
  * Parse text color
  */
-function parseTextColor(txBody: Element): string | undefined {
+function parseTextColor(txBody: Element, themeColors: Map<string, string>): string | undefined {
   const solidFill = txBody.querySelector("solidFill");
   if (!solidFill) return undefined;
 
-  const srgbClr = solidFill.querySelector("srgbClr");
-  if (srgbClr) {
-    const val = srgbClr.getAttribute("val");
-    if (val) return `#${val}`;
-  }
-
-  return undefined;
+  return parseColorValue(solidFill, themeColors);
 }
 /**
  * Parse fill color from shape
  */
-function parseFillColor(sp: Element): string | undefined {
+function parseFillColor(sp: Element, themeColors: Map<string, string>): string | undefined {
   const solidFill = sp.querySelector("spPr > solidFill");
   if (!solidFill) return undefined;
 
-  const srgbClr = solidFill.querySelector("srgbClr");
-  if (srgbClr) {
-    const val = srgbClr.getAttribute("val");
-    if (val) return `#${val}`;
-  }
-
-  return undefined;
+  return parseColorValue(solidFill, themeColors);
 }
 
 /**
  * Parse stroke color from shape
  */
-function parseStrokeColor(sp: Element): string | undefined {
+function parseStrokeColor(sp: Element, themeColors: Map<string, string>): string | undefined {
   const ln = sp.querySelector("spPr > ln");
   if (!ln) return undefined;
 
   const solidFill = ln.querySelector("solidFill");
   if (!solidFill) return undefined;
 
-  const srgbClr = solidFill.querySelector("srgbClr");
-  if (srgbClr) {
-    const val = srgbClr.getAttribute("val");
-    if (val) return `#${val}`;
-  }
-
-  return undefined;
+  return parseColorValue(solidFill, themeColors);
 }
 
 /**
@@ -1379,7 +1489,7 @@ async function parseGraphicFrame(
   zip: JSZip,
   themeColors: Map<string, string>,
   transform?: ElementTransform,
-): Promise<GraphicFrameElement | null> {
+): Promise<SlideElement | null> {
   const xfrm = graphicFrame.querySelector(":scope > xfrm");
   if (!xfrm) return null;
 
@@ -1397,6 +1507,10 @@ async function parseGraphicFrame(
       if (uri.includes("chart")) {
         graphicType = "chart";
       } else if (uri.includes("table")) {
+        const table = graphicFrame.querySelector(":scope > graphic > graphicData > tbl");
+        if (table) {
+          return parseTable(table, position, zIndex, themeColors);
+        }
         graphicType = "table";
       } else if (uri.includes("diagram")) {
         graphicType = "diagram";
@@ -1521,7 +1635,7 @@ function parseColorValue(element: Element, themeColors: Map<string, string>): st
   const srgbClr = element.querySelector("srgbClr");
   if (srgbClr) {
     const val = srgbClr.getAttribute("val");
-    if (val) return `#${val}`;
+    if (val) return applyColorTransforms(`#${val}`, srgbClr);
   }
 
   // Check for schemeClr (theme color reference)
@@ -1530,7 +1644,8 @@ function parseColorValue(element: Element, themeColors: Map<string, string>): st
     const val = schemeClr.getAttribute("val");
     if (val) {
       // Look up in theme colors
-      return themeColors.get(val) || val;
+      const resolved = themeColors.get(val) || val;
+      return applyColorTransforms(resolved.startsWith("#") ? resolved : `#${resolved}`, schemeClr);
     }
   }
 
@@ -1538,14 +1653,73 @@ function parseColorValue(element: Element, themeColors: Map<string, string>): st
   const tagName = element.tagName.toLowerCase();
   if (tagName === "srgbclr" || tagName.endsWith(":srgbClr")) {
     const val = element.getAttribute("val");
-    if (val) return `#${val}`;
+    if (val) return applyColorTransforms(`#${val}`, element);
   }
   if (tagName === "schemeclr" || tagName.endsWith(":schemeClr")) {
     const val = element.getAttribute("val");
-    if (val) return themeColors.get(val) || val;
+    if (val) {
+      const resolved = themeColors.get(val) || val;
+      return applyColorTransforms(resolved.startsWith("#") ? resolved : `#${resolved}`, element);
+    }
   }
 
   return undefined;
+}
+
+function applyColorTransforms(baseColor: string, colorElement: Element): string {
+  const rgb = hexToRgb(baseColor);
+  if (!rgb) return baseColor;
+
+  let [r, g, b] = rgb;
+
+  const lumMod = parseOptionalInt(colorElement.querySelector(":scope > lumMod")?.getAttribute("val"));
+  const lumOff = parseOptionalInt(colorElement.querySelector(":scope > lumOff")?.getAttribute("val"));
+  const tint = parseOptionalInt(colorElement.querySelector(":scope > tint")?.getAttribute("val"));
+  const shade = parseOptionalInt(colorElement.querySelector(":scope > shade")?.getAttribute("val"));
+
+  if (lumMod !== undefined || lumOff !== undefined) {
+    const mod = (lumMod ?? 100000) / 100000;
+    const off = (lumOff ?? 0) / 100000;
+    r = clampColor(Math.round(r * mod + 255 * off));
+    g = clampColor(Math.round(g * mod + 255 * off));
+    b = clampColor(Math.round(b * mod + 255 * off));
+  }
+
+  if (tint !== undefined) {
+    const factor = tint / 100000;
+    r = clampColor(Math.round(r + (255 - r) * factor));
+    g = clampColor(Math.round(g + (255 - g) * factor));
+    b = clampColor(Math.round(b + (255 - b) * factor));
+  }
+
+  if (shade !== undefined) {
+    const factor = shade / 100000;
+    r = clampColor(Math.round(r * factor));
+    g = clampColor(Math.round(g * factor));
+    b = clampColor(Math.round(b * factor));
+  }
+
+  return rgbToHex(r, g, b);
+}
+
+function hexToRgb(color: string): [number, number, number] | undefined {
+  const hex = color.replace("#", "");
+  if (hex.length !== 6) return undefined;
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16),
+  ];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b]
+    .map((channel) => clampColor(channel).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function clampColor(value: number): number {
+  return Math.max(0, Math.min(255, value));
 }
 
 /**

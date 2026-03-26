@@ -230,15 +230,13 @@ describe("real PPTX fixtures", () => {
             ],
           },
           {
-            "graphicFrame": 1,
-            "graphicTypes": [
-              "table",
-            ],
+            "graphicFrame": 0,
+            "graphicTypes": [],
             "group": 0,
             "image": 0,
             "number": 4,
             "shape": 0,
-            "table": 0,
+            "table": 1,
             "text": 5,
             "textPreview": [
               "Evaluation Matrix",
@@ -248,15 +246,13 @@ describe("real PPTX fixtures", () => {
             ],
           },
           {
-            "graphicFrame": 1,
-            "graphicTypes": [
-              "table",
-            ],
+            "graphicFrame": 0,
+            "graphicTypes": [],
             "group": 0,
             "image": 1,
             "number": 5,
             "shape": 0,
-            "table": 0,
+            "table": 1,
             "text": 6,
             "textPreview": [
               "Landscape Review:",
@@ -293,15 +289,13 @@ describe("real PPTX fixtures", () => {
             ],
           },
           {
-            "graphicFrame": 1,
-            "graphicTypes": [
-              "table",
-            ],
+            "graphicFrame": 0,
+            "graphicTypes": [],
             "group": 0,
             "image": 1,
             "number": 8,
             "shape": 0,
-            "table": 0,
+            "table": 1,
             "text": 3,
             "textPreview": [
               "Road to Prototype:",
@@ -393,7 +387,7 @@ describe("real PPTX fixtures", () => {
       hasEvaluationMatrix: container.textContent?.includes("Evaluation Matrix") ?? false,
     }).toMatchInlineSnapshot(`
       {
-        "graphicFrames": 6,
+        "graphicFrames": 3,
         "hasEvaluationMatrix": true,
         "hasOpenBridge": true,
         "imageElements": 16,

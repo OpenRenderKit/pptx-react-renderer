@@ -611,24 +611,88 @@ function renderTableElement(element: TableElement, scale: number): HTMLElement {
   table.style.left = `${element.x * scale}px`;
   table.style.top = `${element.y * scale}px`;
   table.style.width = `${element.width * scale}px`;
+  table.style.height = `${element.height * scale}px`;
   table.style.position = "absolute";
   table.style.borderCollapse = "collapse";
+  table.style.tableLayout = "fixed";
+
+  if (element.backgroundColor) {
+    table.style.backgroundColor = element.backgroundColor;
+  }
+
+  if (element.columnWidths?.length) {
+    const colgroup = document.createElement("colgroup");
+    element.columnWidths.forEach((width) => {
+      const col = document.createElement("col");
+      col.style.width = `${width * scale}px`;
+      colgroup.appendChild(col);
+    });
+    table.appendChild(colgroup);
+  }
 
   element.rows.forEach((row) => {
     const tr = document.createElement("tr");
+    if (row.height) {
+      tr.style.height = `${row.height * scale}px`;
+    }
 
     row.cells.forEach((cell) => {
       const td = document.createElement("td");
-      td.textContent = cell.content;
-      td.style.border = "1px solid #ccc";
-      td.style.padding = "8px";
+      td.style.boxSizing = "border-box";
+      td.style.overflow = "hidden";
+      td.style.wordBreak = "break-word";
+
+      if (cell.padding) {
+        td.style.padding = `${ptToPx((cell.padding.top || 0) * scale)}px ${ptToPx(
+          (cell.padding.right || 0) * scale,
+        )}px ${ptToPx((cell.padding.bottom || 0) * scale)}px ${ptToPx((cell.padding.left || 0) * scale)}px`;
+      } else {
+        td.style.padding = "8px";
+      }
 
       if (cell.backgroundColor) {
         td.style.backgroundColor = cell.backgroundColor;
       }
 
+      if (cell.align) {
+        td.style.textAlign = cell.align;
+      }
+      if (cell.verticalAlign) {
+        td.style.verticalAlign =
+          cell.verticalAlign === "middle"
+            ? "middle"
+            : cell.verticalAlign === "bottom"
+              ? "bottom"
+              : "top";
+      }
+
+      applyTableCellBorderStyles(td, cell);
+
       if (cell.rowSpan) td.rowSpan = cell.rowSpan;
       if (cell.colSpan) td.colSpan = cell.colSpan;
+
+      const textDefaults: TextElement = {
+        type: "text",
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        zIndex: 0,
+        runs: [],
+        defaultFontSize: cell.defaultFontSize,
+        defaultFontFamily: cell.defaultFontFamily,
+        defaultColor: cell.defaultColor,
+        align: cell.align,
+        verticalAlign: cell.verticalAlign,
+      };
+
+      if (cell.paragraphs?.length) {
+        cell.paragraphs.forEach((paragraph) => {
+          td.appendChild(renderParagraph(paragraph, textDefaults, scale));
+        });
+      } else {
+        td.textContent = cell.content;
+      }
 
       tr.appendChild(td);
     });
@@ -637,6 +701,35 @@ function renderTableElement(element: TableElement, scale: number): HTMLElement {
   });
 
   return table;
+}
+
+function applyTableCellBorderStyles(cellEl: HTMLTableCellElement, cell: TableElement["rows"][number]["cells"][number]) {
+  const borders = cell.borders;
+  if (!borders) {
+    cellEl.style.border = "1px solid #ccc";
+    return;
+  }
+
+  applySingleBorder(cellEl, "Left", borders.left);
+  applySingleBorder(cellEl, "Right", borders.right);
+  applySingleBorder(cellEl, "Top", borders.top);
+  applySingleBorder(cellEl, "Bottom", borders.bottom);
+}
+
+function applySingleBorder(
+  element: HTMLTableCellElement,
+  side: "Left" | "Right" | "Top" | "Bottom",
+  border: NonNullable<TableElement["rows"][number]["cells"][number]["borders"]>[keyof NonNullable<
+    TableElement["rows"][number]["cells"][number]["borders"]
+  >],
+) {
+  const prop = `border${side}` as const;
+  if (!border || !border.color || !border.width) {
+    element.style[prop] = "none";
+    return;
+  }
+
+  element.style[prop] = `${border.width}px ${border.style || "solid"} ${border.color}`;
 }
 
 /**
