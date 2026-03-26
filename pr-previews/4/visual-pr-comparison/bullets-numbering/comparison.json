@@ -1,0 +1,37 @@
+{
+  "caseId": "bullets-numbering",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "maxDiffRatio": 0,
+  "meanDiffRatio": 0,
+  "topSlides": [
+    {
+      "slide": 1,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.016333550347222222,
+    "meanObservedDiffRatio": 0.016333550347222222
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.016333550347222222,
+    "meanObservedDiffRatio": 0.016333550347222222
+  }
+}
