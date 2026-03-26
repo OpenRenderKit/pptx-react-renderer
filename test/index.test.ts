@@ -195,6 +195,96 @@ describe("pptx-react-renderer", () => {
     expect(container.textContent).toContain("Chart");
   });
 
+  it("parses grouped children using group transform coordinates and renders them", async () => {
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:grpSp>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="914400" y="914400"/>
+            <a:ext cx="1828800" cy="1828800"/>
+            <a:chOff x="457200" y="457200"/>
+            <a:chExt cx="914400" cy="914400"/>
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="457200" y="457200"/>
+              <a:ext cx="457200" cy="228600"/>
+            </a:xfrm>
+            <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr wrap="square"/>
+            <a:lstStyle/>
+            <a:p>
+              <a:r>
+                <a:t>Grouped Title</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="685800" y="685800"/>
+              <a:ext cx="228600" cy="228600"/>
+            </a:xfrm>
+            <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+            <a:solidFill><a:srgbClr val="4472C4"/></a:solidFill>
+          </p:spPr>
+        </p:sp>
+      </p:grpSp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    const group = slides[0].elements[0];
+
+    expect(group).toMatchObject({
+      type: "group",
+      x: 96,
+      y: 96,
+      width: 192,
+      height: 192,
+    });
+
+    if (group.type !== "group") {
+      throw new Error("Expected a parsed group element");
+    }
+
+    expect(group.children).toEqual([
+      expect.objectContaining({
+        type: "text",
+        x: 96,
+        y: 96,
+        width: 96,
+        height: 48,
+      }),
+      expect.objectContaining({
+        type: "shape",
+        x: 144,
+        y: 144,
+        width: 48,
+        height: 48,
+      }),
+    ]);
+
+    const container = document.createElement("div");
+    renderSlides(slides, { container });
+
+    expect(container.textContent).toContain("Grouped Title");
+    expect(container.querySelector(".pptx-group-element .pptx-text-element")).not.toBeNull();
+  });
+
   it("throws a clear error when browser parsing APIs are unavailable", async () => {
     const buffer = await createTestPptx([{ text: ["Guard"] }]);
     const originalDomParser = globalThis.DOMParser;

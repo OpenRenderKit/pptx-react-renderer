@@ -6,6 +6,7 @@ import type {
   TextElement,
   ImageElement,
   ShapeElement,
+  GroupElement,
   TableElement,
   TableRow,
   TableCell,
@@ -298,38 +299,15 @@ async function parseSlide(
   const spTree = doc.querySelector("spTree");
 
   if (spTree) {
-    let zIndex = 0;
-
-    // Parse shapes
-    spTree.querySelectorAll(":scope > sp").forEach((sp) => {
-      const element = parseShape(sp, zIndex++);
-      if (element) elements.push(element);
-    });
-
-    // Parse pictures
-    spTree.querySelectorAll(":scope > pic").forEach((pic) => {
-      const element = parsePicture(pic, zIndex++, relationships, imageMap);
-      if (element) elements.push(element);
-    });
-
-    // Parse groups
-    spTree.querySelectorAll(":scope > grpSp").forEach((grpSp) => {
-      const element = parseGroup(grpSp, zIndex++);
-      if (element) elements.push(element);
-    });
-
-    // Parse graphic frames (SmartArt, charts, tables)
-    const graphicFramePromises: Promise<GraphicFrameElement | null>[] = [];
-    spTree.querySelectorAll(":scope > graphicFrame").forEach((graphicFrame) => {
-      graphicFramePromises.push(
-        parseGraphicFrame(graphicFrame, zIndex++, relationships, zip, themeColors),
-      );
-    });
-
-    const graphicFrames = await Promise.all(graphicFramePromises);
-    graphicFrames.forEach((element) => {
-      if (element) elements.push(element);
-    });
+    const zIndex = { value: 0 };
+    elements.push(
+      ...(await parseSpTreeChildren(
+        spTree,
+        zIndex,
+        { relationships, imageMap, zip, themeColors },
+        undefined,
+      )),
+    );
   }
 
   // Parse background
@@ -344,14 +322,79 @@ async function parseSlide(
   };
 }
 
+type ElementTransform = {
+  offsetX: number;
+  offsetY: number;
+  scaleX: number;
+  scaleY: number;
+};
+
+type ElementContext = {
+  relationships: Map<string, string>;
+  imageMap: Map<string, { src: string; mimeType: string }>;
+  zip: JSZip;
+  themeColors: Map<string, string>;
+};
+
+async function parseSpTreeChildren(
+  container: Element,
+  zIndex: { value: number },
+  context: ElementContext,
+  transform?: ElementTransform,
+): Promise<SlideElement[]> {
+  const elements: SlideElement[] = [];
+
+  for (const child of Array.from(container.children)) {
+    switch (child.localName) {
+      case "sp": {
+        const element = parseShape(child, zIndex.value++, transform);
+        if (element) elements.push(element);
+        break;
+      }
+      case "pic": {
+        const element = parsePicture(
+          child,
+          zIndex.value++,
+          context.relationships,
+          context.imageMap,
+          transform,
+        );
+        if (element) elements.push(element);
+        break;
+      }
+      case "grpSp": {
+        const element = await parseGroup(child, zIndex, context, transform);
+        if (element) elements.push(element);
+        break;
+      }
+      case "graphicFrame": {
+        const element = await parseGraphicFrame(
+          child,
+          zIndex.value++,
+          context.relationships,
+          context.zip,
+          context.themeColors,
+          transform,
+        );
+        if (element) elements.push(element);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  return elements;
+}
+
 /**
  * Parse a shape element
  */
-function parseShape(sp: Element, zIndex: number): SlideElement | null {
-  const xfrm = sp.querySelector("xfrm");
+function parseShape(sp: Element, zIndex: number, transform?: ElementTransform): SlideElement | null {
+  const xfrm = sp.querySelector(":scope > spPr > xfrm");
   if (!xfrm) return null;
 
-  const position = parsePosition(xfrm);
+  const position = parsePosition(xfrm, transform);
 
   // Check if it's a text element
   const txBody = sp.querySelector("txBody");
@@ -824,11 +867,12 @@ function parsePicture(
   zIndex: number,
   relationships: Map<string, string>,
   imageMap: Map<string, { src: string; mimeType: string }>,
+  transform?: ElementTransform,
 ): ImageElement | null {
-  const xfrm = pic.querySelector("xfrm");
+  const xfrm = pic.querySelector(":scope > spPr > xfrm");
   if (!xfrm) return null;
 
-  const position = parsePosition(xfrm);
+  const position = parsePosition(xfrm, transform);
 
   // Get image reference
   const blip = pic.querySelector("blip");
@@ -867,21 +911,26 @@ function parsePicture(
 /**
  * Parse a group element
  */
-function parseGroup(grpSp: Element, zIndex: number): SlideElement | null {
-  const xfrm = grpSp.querySelector("xfrm");
+async function parseGroup(
+  grpSp: Element,
+  zIndex: { value: number },
+  context: ElementContext,
+  parentTransform?: ElementTransform,
+): Promise<GroupElement | null> {
+  const groupZIndex = zIndex.value++;
+  const xfrm = grpSp.querySelector(":scope > grpSpPr > xfrm");
   if (!xfrm) return null;
 
-  const position = parsePosition(xfrm);
+  const position = parsePosition(xfrm, parentTransform);
+  const childTransform = parseGroupChildTransform(xfrm, parentTransform);
+  const children = await parseSpTreeChildren(grpSp, zIndex, context, childTransform);
 
-  // Simplified - just return as shape for now
-  const shapeElement: ShapeElement = {
-    type: "shape",
+  return {
+    type: "group",
     ...position,
-    zIndex,
-    shapeType: "rect",
+    zIndex: groupZIndex,
+    children,
   };
-
-  return shapeElement;
 }
 
 /**
@@ -1116,7 +1165,22 @@ function parseTable(tbl: Element, position: any, zIndex: number): TableElement {
 /**
  * Parse position and size from xfrm element
  */
-function parsePosition(xfrm: Element): { x: number; y: number; width: number; height: number } {
+function parsePosition(
+  xfrm: Element,
+  transform?: ElementTransform,
+): { x: number; y: number; width: number; height: number } {
+  const bounds = parseEmuBounds(xfrm);
+  const transformed = applyTransform(bounds, transform);
+
+  return {
+    x: emuToPx(transformed.x),
+    y: emuToPx(transformed.y),
+    width: emuToPx(transformed.cx),
+    height: emuToPx(transformed.cy),
+  };
+}
+
+function parseEmuBounds(xfrm: Element): { x: number; y: number; cx: number; cy: number } {
   const off = xfrm.querySelector("off");
   const ext = xfrm.querySelector("ext");
 
@@ -1125,13 +1189,58 @@ function parsePosition(xfrm: Element): { x: number; y: number; width: number; he
   const cx = parseInt(ext?.getAttribute("cx") || "1000000", 10);
   const cy = parseInt(ext?.getAttribute("cy") || "1000000", 10);
 
-  // Convert EMUs to pixels
   return {
-    x: Math.round((x / 914400) * 96),
-    y: Math.round((y / 914400) * 96),
-    width: Math.round((cx / 914400) * 96),
-    height: Math.round((cy / 914400) * 96),
+    x,
+    y,
+    cx,
+    cy,
   };
+}
+
+function applyTransform(
+  bounds: { x: number; y: number; cx: number; cy: number },
+  transform?: ElementTransform,
+): { x: number; y: number; cx: number; cy: number } {
+  if (!transform) {
+    return bounds;
+  }
+
+  return {
+    x: transform.offsetX + bounds.x * transform.scaleX,
+    y: transform.offsetY + bounds.y * transform.scaleY,
+    cx: bounds.cx * transform.scaleX,
+    cy: bounds.cy * transform.scaleY,
+  };
+}
+
+function parseGroupChildTransform(
+  xfrm: Element,
+  parentTransform?: ElementTransform,
+): ElementTransform {
+  const bounds = parseEmuBounds(xfrm);
+  const transformedBounds = applyTransform(bounds, parentTransform);
+
+  const chOff = xfrm.querySelector("chOff");
+  const chExt = xfrm.querySelector("chExt");
+
+  const childOffsetX = parseInt(chOff?.getAttribute("x") || "0", 10);
+  const childOffsetY = parseInt(chOff?.getAttribute("y") || "0", 10);
+  const childExtentX = parseInt(chExt?.getAttribute("cx") || String(bounds.cx || 1), 10) || 1;
+  const childExtentY = parseInt(chExt?.getAttribute("cy") || String(bounds.cy || 1), 10) || 1;
+
+  const scaleX = transformedBounds.cx / childExtentX;
+  const scaleY = transformedBounds.cy / childExtentY;
+
+  return {
+    offsetX: transformedBounds.x - childOffsetX * scaleX,
+    offsetY: transformedBounds.y - childOffsetY * scaleY,
+    scaleX,
+    scaleY,
+  };
+}
+
+function emuToPx(value: number): number {
+  return Math.round((value / 914400) * 96);
 }
 
 /**
@@ -1269,11 +1378,12 @@ async function parseGraphicFrame(
   relationships: Map<string, string>,
   zip: JSZip,
   themeColors: Map<string, string>,
+  transform?: ElementTransform,
 ): Promise<GraphicFrameElement | null> {
-  const xfrm = graphicFrame.querySelector("xfrm");
+  const xfrm = graphicFrame.querySelector(":scope > xfrm");
   if (!xfrm) return null;
 
-  const position = parsePosition(xfrm);
+  const position = parsePosition(xfrm, transform);
 
   // Determine graphic type from graphicData URI
   const graphicData = graphicFrame.querySelector("graphicData");

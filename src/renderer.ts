@@ -9,6 +9,7 @@ import type {
   ImageElement,
   ShapeElement,
   TableElement,
+  GroupElement,
   GraphicFrameElement,
   DiagramData,
   DiagramShape,
@@ -96,11 +97,34 @@ function renderElement(element: SlideElement, scale: number): HTMLElement | null
       return renderShapeElement(element, scale);
     case "table":
       return renderTableElement(element, scale);
+    case "group":
+      return renderGroupElement(element, scale);
     case "graphicFrame":
       return renderGraphicFrameElement(element, scale);
     default:
       return null;
   }
+}
+
+function renderGroupElement(element: GroupElement, scale: number): HTMLElement {
+  const div = document.createElement("div");
+  div.className = "pptx-group-element";
+  div.style.position = "absolute";
+  div.style.left = "0";
+  div.style.top = "0";
+  div.style.width = "0";
+  div.style.height = "0";
+  div.style.pointerEvents = "none";
+
+  element.children
+    .slice()
+    .sort((a, b) => a.zIndex - b.zIndex)
+    .forEach((child) => {
+      const childEl = renderElement(child, scale);
+      if (childEl) div.appendChild(childEl);
+    });
+
+  return div;
 }
 
 /**
