@@ -11,26 +11,39 @@ This repo uses several test layers because parser correctness alone is not enoug
   - Playwright smoke coverage against the committed sanitized deck.
   - Confirms the built package renders in a real browser.
 - `pnpm run test:visual`
-  - Visual-regression run against reference slide images generated from the committed PPTX fixture.
+  - Case-based visual-regression run against reference slide images generated from real PPTX fixtures.
   - Compares selected rendered slides against LibreOffice-derived PNGs using pixel diffs.
 
 ## Visual Regression Model
 
-The visual-regression path is intentionally based on the real fixture deck rather than hand-authored screenshots.
+The visual-regression path is intentionally based on real PPTX fixtures rather than hand-authored screenshots.
 
-1. `scripts/render-reference-images.mjs` converts `test/fixtures/real/complex-sanitized.pptx` into a PDF with LibreOffice.
-2. The PDF is rasterized to per-slide PNGs with `pdftoppm` at 96 DPI so the image dimensions match the renderer's 96-DPI slide model.
-3. `test/visual.regression.spec.ts` renders the same PPTX through `pptx-react-renderer` in Chromium.
-4. Playwright screenshots selected slides and compares them to the reference PNGs with `pixelmatch`.
-5. Metrics, actual images, reference images, and diff images are written under `test-results/visual-regression/`.
+1. `scripts/generate-visual-fixtures.mjs` creates focused edge-case decks under `.tmp/visual-fixtures/`.
+2. `scripts/render-reference-images.mjs` converts each selected PPTX fixture into a PDF with LibreOffice.
+3. The PDF is rasterized to per-slide PNGs with `pdftoppm` at 96 DPI so the image dimensions match the renderer's 96-DPI slide model.
+4. `test/visual.regression.spec.ts` renders the same PPTX through `pptx-react-renderer` in Chromium.
+5. Playwright screenshots selected slides and compares them to the reference PNGs with `pixelmatch`.
+6. Metrics, actual images, reference images, and diff images are written under `test-results/visual-regression/`.
 
 This is not the same as comparing against native Microsoft PowerPoint output. On GitHub Actions we can reliably run LibreOffice on Linux; we cannot reliably run PowerPoint itself. The point of the test is to provide a realistic office-rendered baseline that is reproducible in CI.
 
-## Why Only Selected Slides
+## Visual Cases
 
-The committed complex fixture includes SmartArt, diagrams, grouped content, images, and tables. Some slides still contain features that the renderer intentionally does not support well enough yet, especially chart and SmartArt fidelity.
+The visual suite now mixes:
 
-The initial visual-regression suite compares a curated subset of slides:
+- the committed complex regression deck
+- focused generated decks for:
+  - text layout
+  - theme colors
+  - grouped transforms
+  - table layout
+  - image placement
+
+Each case compares only the slides that are meaningful for that case.
+
+The committed complex fixture still includes SmartArt, diagrams, grouped content, images, and tables. Some slides contain features that the renderer intentionally does not support well enough yet, especially chart and SmartArt fidelity.
+
+The current complex-deck comparison stays limited to a curated subset:
 
 - `1`
 - `4`
@@ -39,7 +52,7 @@ The initial visual-regression suite compares a curated subset of slides:
 
 These are useful because they stress text placement, images, tables, and overall layout without being dominated by currently unsupported chart behavior.
 
-As fidelity improves, expand the compared slide set and tighten thresholds.
+As fidelity improves, add more generated cases, expand the compared slide sets, and tighten thresholds.
 
 ## Local Prerequisites For Visual Regression
 
@@ -71,6 +84,6 @@ The `visual-regression` GitHub Actions job:
 - runs the Playwright visual comparison
 - uploads diff artifacts and writes a job summary
 
-Threshold enforcement is currently metric-only by default in CI. The job measures max and mean pixel-diff ratios but does not hard-fail on them until the thresholds are calibrated against real runs.
+Threshold enforcement is currently metric-only by default in CI. The job measures max and mean pixel-diff ratios per case but does not hard-fail on them until the thresholds are calibrated against real runs.
 
 When the measured values stabilize, set `PPTX_VISUAL_ENFORCE=1` in CI and tighten the thresholds.

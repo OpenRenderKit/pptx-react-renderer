@@ -31,7 +31,7 @@ This command is intended for maintainers. CI uses the committed sanitized fixtur
 - run `pnpm run test:visual` when you change layout, text flow, image placement, or other fidelity-sensitive rendering behavior
 - if you update the complex regression deck, rerun `pnpm run verify` and `pnpm run test:browser` before pushing
 
-`pnpm run test:visual` requires LibreOffice (`soffice`) and Poppler (`pdftoppm`) locally. See [docs/TESTING.md](./docs/TESTING.md) for setup details and the current GitHub Actions visual-regression model.
+`pnpm run test:visual` requires LibreOffice (`soffice`) and Poppler (`pdftoppm`) locally. It generates focused edge-case decks and office-rendered references on demand. See [docs/TESTING.md](./docs/TESTING.md) for setup details and the current GitHub Actions visual-regression model.
 
 ## Release Process
 

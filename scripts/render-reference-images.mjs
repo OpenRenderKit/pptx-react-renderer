@@ -3,12 +3,7 @@ import { constants } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
-
-const fixturePath = path.resolve(process.env.PPTX_VISUAL_FIXTURE || "test/fixtures/real/complex-sanitized.pptx");
-const fixtureName = path.basename(fixturePath, ".pptx");
-const outputDir = path.resolve(
-  process.env.PPTX_VISUAL_REFERENCE_DIR || path.join(".tmp", "visual-reference", fixtureName),
-);
+import { getSelectedVisualCases } from "./visual-cases.mjs";
 
 const sofficePath = await findExecutable(
   process.env.SOFFICE_BIN,
@@ -32,47 +27,51 @@ if (!pdftoppmPath) {
   );
 }
 
-const tempDir = await mkdtemp(path.join(os.tmpdir(), "pptx-react-renderer-visual-"));
+for (const visualCase of getSelectedVisualCases()) {
+  const fixturePath = path.resolve(visualCase.sourceFile);
+  const outputDir = path.resolve(".tmp", "visual-reference", visualCase.id);
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), `pptx-react-renderer-visual-${visualCase.id}-`));
 
-try {
-  await rm(outputDir, { recursive: true, force: true });
-  await mkdir(outputDir, { recursive: true });
+  try {
+    await rm(outputDir, { recursive: true, force: true });
+    await mkdir(outputDir, { recursive: true });
 
-  await runCommand(sofficePath, [
-    "--headless",
-    "--nologo",
-    "--nodefault",
-    "--nolockcheck",
-    "--convert-to",
-    "pdf",
-    "--outdir",
-    tempDir,
-    fixturePath,
-  ]);
+    await runCommand(sofficePath, [
+      "--headless",
+      "--nologo",
+      "--nodefault",
+      "--nolockcheck",
+      "--convert-to",
+      "pdf",
+      "--outdir",
+      tempDir,
+      fixturePath,
+    ]);
 
-  const pdfPath = path.join(tempDir, `${fixtureName}.pdf`);
-  await access(pdfPath, constants.R_OK);
+    const pdfPath = path.join(tempDir, `${path.basename(fixturePath, ".pptx")}.pdf`);
+    await access(pdfPath, constants.R_OK);
 
-  const imagePrefix = path.join(tempDir, "slide");
-  await runCommand(pdftoppmPath, ["-png", "-r", "96", pdfPath, imagePrefix]);
+    const imagePrefix = path.join(tempDir, "slide");
+    await runCommand(pdftoppmPath, ["-png", "-r", "96", pdfPath, imagePrefix]);
 
-  const slideImages = (await readdir(tempDir))
-    .filter((name) => /^slide-\d+\.png$/.test(name))
-    .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+    const slideImages = (await readdir(tempDir))
+      .filter((name) => /^slide-\d+\.png$/.test(name))
+      .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 
-  if (slideImages.length === 0) {
-    throw new Error("Reference rendering produced no slide PNGs.");
+    if (slideImages.length === 0) {
+      throw new Error(`Reference rendering produced no slide PNGs for ${visualCase.id}.`);
+    }
+
+    await Promise.all(
+      slideImages.map((fileName, index) =>
+        cp(path.join(tempDir, fileName), path.join(outputDir, `slide-${String(index + 1).padStart(2, "0")}.png`)),
+      ),
+    );
+
+    console.log(`Rendered ${slideImages.length} reference slides for ${visualCase.id} into ${outputDir}`);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
   }
-
-  await Promise.all(
-    slideImages.map((fileName, index) =>
-      cp(path.join(tempDir, fileName), path.join(outputDir, `slide-${String(index + 1).padStart(2, "0")}.png`)),
-    ),
-  );
-
-  console.log(`Rendered ${slideImages.length} reference slides into ${outputDir}`);
-} finally {
-  await rm(tempDir, { recursive: true, force: true });
 }
 
 async function findExecutable(...candidates) {

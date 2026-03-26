@@ -58,6 +58,7 @@ pnpm run test:visual
 
 - Realistic committed fixtures live under `test/fixtures/real/`.
 - `test/fixtures/real/complex-sanitized.pptx` is the main regression deck for SmartArt, tables, groups, diagrams, and mixed media.
+- Generated edge-case visual fixtures are created under `.tmp/visual-fixtures/` during `pnpm run test:visual`.
 - Visual-regression reference images are generated locally and in CI from the committed fixture; do not commit generated reference PNGs.
 - Regenerate the sanitized complex fixture only from a local source deck using:
 

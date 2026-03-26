@@ -51,6 +51,7 @@
     "browser:bundle-harness": "esbuild test/browser/harness/runner.js --bundle --platform=browser --format=esm --outfile=test/browser/harness/bundle.js",
     "clean": "rm -rf dist coverage",
     "fixtures:generate": "node scripts/generate-test-fixtures.mjs",
+    "fixtures:generate-visual": "node scripts/generate-visual-fixtures.mjs",
     "fixtures:render-reference": "node scripts/render-reference-images.mjs",
     "fixtures:sanitize-complex": "node scripts/sanitize-complex-fixture.mjs",
     "release:plan": "node scripts/release-plan.mjs",
@@ -59,7 +60,7 @@
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:browser": "pnpm run build && pnpm run browser:bundle-harness && playwright test",
-    "test:visual": "pnpm run build && pnpm run browser:bundle-harness && pnpm run fixtures:render-reference && playwright test -c playwright.visual.config.ts",
+    "test:visual": "pnpm run build && pnpm run browser:bundle-harness && pnpm run fixtures:generate-visual && pnpm run fixtures:render-reference && playwright test -c playwright.visual.config.ts",
     "verify": "pnpm run typecheck && pnpm run build && pnpm run test",
     "pack:check": "pnpm pack --dry-run",
     "prepublishOnly": "pnpm run clean && pnpm run verify"
