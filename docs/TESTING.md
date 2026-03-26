@@ -34,12 +34,25 @@ The visual suite now mixes:
 - the committed complex regression deck
 - focused generated decks for:
   - text layout
+  - bullets and auto-numbering
+  - text insets and vertical anchoring
+  - paragraph spacing and line spacing
   - theme colors
+  - theme luminance transforms
   - grouped transforms
+  - nested groups
   - table layout
   - image placement
+  - image cropping
+  - unsupported chart behavior
 
 Each case compares only the slides that are meaningful for that case.
+
+The suite also includes explicit metric-only tracking cases for:
+
+- SmartArt / diagram fallback behavior from the committed complex deck
+- nested grouped transforms that are not stable enough to gate yet
+- image cropping and unsupported charts, where the library is intentionally incomplete today
 
 The committed complex fixture still includes SmartArt, diagrams, grouped content, images, and tables. Some slides contain features that the renderer intentionally does not support well enough yet, especially chart and SmartArt fidelity.
 
@@ -75,6 +88,8 @@ sudo apt-get install -y libreoffice poppler-utils
 
 If `soffice` is not on `PATH`, set `SOFFICE_BIN`.
 
+The reference-generation script also checks common macOS LibreOffice locations automatically, and `pdftoppm` can be overridden with `PDFTOPPM_BIN` if Poppler is installed outside the default `PATH`.
+
 ## CI Behavior
 
 The `visual-regression` GitHub Actions job:
@@ -84,6 +99,8 @@ The `visual-regression` GitHub Actions job:
 - runs the Playwright visual comparison
 - uploads diff artifacts and writes a job summary
 
-Threshold enforcement is currently metric-only by default in CI. The job measures max and mean pixel-diff ratios per case but does not hard-fail on them until the thresholds are calibrated against real runs.
+CI currently runs visual regression in metric-only mode for normal development and release work. That means pull requests and routine version bumps still get full visual artifacts, diff images, and summary metrics without blocking merges.
 
-When the measured values stabilize, set `PPTX_VISUAL_ENFORCE=1` in CI and tighten the thresholds.
+Hard threshold enforcement is still available through `PPTX_VISUAL_ENFORCE=1` for local work and for future major release gates such as `1.0.0` or `2.0.0`, where a stricter visual freeze makes more sense.
+
+As fidelity improves, keep tightening thresholds, and reserve CI-blocking visual gates for explicit major-release checkpoints rather than every `0.x` or `x.y.z` release.

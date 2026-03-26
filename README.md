@@ -199,7 +199,7 @@ See [docs/RELEASING.md](./docs/RELEASING.md) for the concrete release flow and r
 - a case-based visual-regression path renders real PPTX fixtures through LibreOffice, screenshots selected slides from the browser renderer, and diffs them with `pixelmatch`
 - a sanitized golden deck derived from a complex local source presentation is committed so CI can exercise realistic SmartArt, tables, groups, and mixed media without depending on private files
 
-`pnpm run test:visual` requires LibreOffice (`soffice`) and Poppler (`pdftoppm`) locally. See [docs/TESTING.md](./docs/TESTING.md) for the visual-regression model, local prerequisites, and GitHub Actions behavior.
+`pnpm run test:visual` requires LibreOffice (`soffice`) and Poppler (`pdftoppm`) locally. CI runs the visual suite on every change and publishes metrics, diff images, and artifacts, but it does not block routine `0.x` or `x.y.z` work. Hard threshold enforcement remains available locally and for future major-release gates. See [docs/TESTING.md](./docs/TESTING.md) for the visual-regression model, local prerequisites, and GitHub Actions behavior.
 
 ## Contributing
 

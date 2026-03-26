@@ -35,40 +35,51 @@ for (const visualCase of getSelectedVisualCases()) {
   try {
     await rm(outputDir, { recursive: true, force: true });
     await mkdir(outputDir, { recursive: true });
+    const profileDir = await mkdtemp(path.join(os.tmpdir(), `pptx-react-renderer-lo-profile-${visualCase.id}-`));
 
-    await runCommand(sofficePath, [
-      "--headless",
-      "--nologo",
-      "--nodefault",
-      "--nolockcheck",
-      "--convert-to",
-      "pdf",
-      "--outdir",
-      tempDir,
-      fixturePath,
-    ]);
+    try {
+      await runCommand(sofficePath, [
+        "--headless",
+        "-env:UserInstallation=file://" + profileDir,
+        "--nologo",
+        "--nodefault",
+        "--nolockcheck",
+        "--convert-to",
+        "pdf:impress_pdf_Export",
+        "--outdir",
+        tempDir,
+        fixturePath,
+      ]);
 
-    const pdfPath = path.join(tempDir, `${path.basename(fixturePath, ".pptx")}.pdf`);
-    await access(pdfPath, constants.R_OK);
+      const pdfFiles = (await readdir(tempDir)).filter((name) => name.toLowerCase().endsWith(".pdf"));
+      if (pdfFiles.length === 0) {
+        throw new Error(`LibreOffice did not produce a PDF for ${visualCase.id}.`);
+      }
 
-    const imagePrefix = path.join(tempDir, "slide");
-    await runCommand(pdftoppmPath, ["-png", "-r", "96", pdfPath, imagePrefix]);
+      const pdfPath = path.join(tempDir, pdfFiles[0]);
+      await access(pdfPath, constants.R_OK);
 
-    const slideImages = (await readdir(tempDir))
-      .filter((name) => /^slide-\d+\.png$/.test(name))
-      .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+      const imagePrefix = path.join(tempDir, "slide");
+      await runCommand(pdftoppmPath, ["-png", "-r", "96", pdfPath, imagePrefix]);
 
-    if (slideImages.length === 0) {
-      throw new Error(`Reference rendering produced no slide PNGs for ${visualCase.id}.`);
+      const slideImages = (await readdir(tempDir))
+        .filter((name) => /^slide-\d+\.png$/.test(name))
+        .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
+
+      if (slideImages.length === 0) {
+        throw new Error(`Reference rendering produced no slide PNGs for ${visualCase.id}.`);
+      }
+
+      await Promise.all(
+        slideImages.map((fileName, index) =>
+          cp(path.join(tempDir, fileName), path.join(outputDir, `slide-${String(index + 1).padStart(2, "0")}.png`)),
+        ),
+      );
+
+      console.log(`Rendered ${slideImages.length} reference slides for ${visualCase.id} into ${outputDir}`);
+    } finally {
+      await rm(profileDir, { recursive: true, force: true });
     }
-
-    await Promise.all(
-      slideImages.map((fileName, index) =>
-        cp(path.join(tempDir, fileName), path.join(outputDir, `slide-${String(index + 1).padStart(2, "0")}.png`)),
-      ),
-    );
-
-    console.log(`Rendered ${slideImages.length} reference slides for ${visualCase.id} into ${outputDir}`);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

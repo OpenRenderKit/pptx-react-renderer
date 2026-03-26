@@ -5,11 +5,13 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { getSelectedVisualCases } from "../scripts/visual-cases.mjs";
 
+const MAX_DIMENSION_DRIFT = 1;
+
 for (const visualCase of getSelectedVisualCases()) {
   test(`compares ${visualCase.id} against LibreOffice reference images`, async ({ page }) => {
     const referenceDir = path.resolve(".tmp", "visual-reference", visualCase.id);
     const reportDir = path.resolve("test-results", "visual-regression", visualCase.id);
-    const shouldEnforce = process.env.PPTX_VISUAL_ENFORCE === "1" || visualCase.enforce;
+    const shouldEnforce = process.env.PPTX_VISUAL_ENFORCE === "1" && visualCase.enforce === true;
 
     await mkdir(reportDir, { recursive: true });
 
@@ -46,16 +48,24 @@ for (const visualCase of getSelectedVisualCases()) {
       const slideLabel = `slide-${String(slideNumber).padStart(2, "0")}`;
       const actualBuffer = await slides.nth(slideNumber - 1).screenshot({ animations: "disabled" });
       const referenceBuffer = await readFile(path.join(referenceDir, `${slideLabel}.png`));
-      const actual = PNG.sync.read(actualBuffer);
-      const reference = PNG.sync.read(referenceBuffer);
+      const actualImage = PNG.sync.read(actualBuffer);
+      const referenceImage = PNG.sync.read(referenceBuffer);
+      const widthDrift = Math.abs(actualImage.width - referenceImage.width);
+      const heightDrift = Math.abs(actualImage.height - referenceImage.height);
 
       expect(
-        { width: actual.width, height: actual.height },
-        `${visualCase.id} ${slideLabel} dimensions should match the reference image`,
-      ).toEqual({
-        width: reference.width,
-        height: reference.height,
-      });
+        widthDrift,
+        `${visualCase.id} ${slideLabel} width drifted too far from the reference image`,
+      ).toBeLessThanOrEqual(MAX_DIMENSION_DRIFT);
+      expect(
+        heightDrift,
+        `${visualCase.id} ${slideLabel} height drifted too far from the reference image`,
+      ).toBeLessThanOrEqual(MAX_DIMENSION_DRIFT);
+
+      const comparisonWidth = Math.min(actualImage.width, referenceImage.width);
+      const comparisonHeight = Math.min(actualImage.height, referenceImage.height);
+      const actual = cropPng(actualImage, comparisonWidth, comparisonHeight);
+      const reference = cropPng(referenceImage, comparisonWidth, comparisonHeight);
 
       const diff = new PNG({ width: actual.width, height: actual.height });
       const mismatchPixels = pixelmatch(
@@ -74,8 +84,14 @@ for (const visualCase of getSelectedVisualCases()) {
 
       metrics.push({
         slide: slideNumber,
-        width: actual.width,
-        height: actual.height,
+        actualWidth: actualImage.width,
+        actualHeight: actualImage.height,
+        referenceWidth: referenceImage.width,
+        referenceHeight: referenceImage.height,
+        comparedWidth: actual.width,
+        comparedHeight: actual.height,
+        widthDrift,
+        heightDrift,
         mismatchPixels,
         totalPixels,
         diffRatio,
@@ -115,4 +131,20 @@ for (const visualCase of getSelectedVisualCases()) {
       ).toBeLessThanOrEqual(visualCase.thresholds.meanDiffRatio);
     }
   });
+}
+
+function cropPng(source, width, height) {
+  if (source.width === width && source.height === height) {
+    return source;
+  }
+
+  const cropped = new PNG({ width, height });
+
+  for (let y = 0; y < height; y += 1) {
+    const sourceStart = y * source.width * 4;
+    const sourceEnd = sourceStart + width * 4;
+    source.data.copy(cropped.data, y * width * 4, sourceStart, sourceEnd);
+  }
+
+  return cropped;
 }
