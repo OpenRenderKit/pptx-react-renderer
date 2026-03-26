@@ -1,4 +1,19 @@
+function range(start, end) {
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+}
+
 export const visualCases = [
+  {
+    id: "slop-sample",
+    sourceFile: "test/fixtures/real/slop-sample.pptx",
+    browserFixturePath: "/test/fixtures/real/slop-sample.pptx",
+    slides: range(1, 12),
+    thresholds: {
+      maxDiffRatio: 0.9,
+      meanDiffRatio: 0.6,
+    },
+    enforce: false,
+  },
   {
     id: "complex-sanitized",
     sourceFile: "test/fixtures/real/complex-sanitized.pptx",
