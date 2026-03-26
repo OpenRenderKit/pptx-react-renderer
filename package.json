@@ -54,6 +54,7 @@
     "fixtures:generate-visual": "node scripts/generate-visual-fixtures.mjs",
     "fixtures:render-reference": "node scripts/render-reference-images.mjs",
     "fixtures:sanitize-complex": "node scripts/sanitize-complex-fixture.mjs",
+    "fixtures:visual-report": "node scripts/write-visual-report.mjs",
     "release:plan": "node scripts/release-plan.mjs",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run test:unit",

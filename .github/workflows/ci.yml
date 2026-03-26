@@ -83,6 +83,9 @@ jobs:
           sudo apt-get install -y libreoffice poppler-utils
       - run: npx playwright install --with-deps chromium
       - run: pnpm run test:visual
+      - name: Build visual regression HTML report
+        if: always()
+        run: node scripts/write-visual-report.mjs
       - name: Append visual regression summary
         if: always()
         run: node scripts/write-visual-summary.mjs >> "$GITHUB_STEP_SUMMARY"

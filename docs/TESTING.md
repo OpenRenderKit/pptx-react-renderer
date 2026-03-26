@@ -31,6 +31,7 @@ This is not the same as comparing against native Microsoft PowerPoint output. On
 
 The visual suite now mixes:
 
+- the committed `Slop-Sample` deck, which compares every slide from a realistic placeholder-only presentation with varied themes, tables, images, notes-safe content, and diagram-heavy layouts
 - the committed complex regression deck
 - focused generated decks for:
   - text layout
@@ -100,6 +101,8 @@ The `visual-regression` GitHub Actions job:
 - uploads diff artifacts and writes a job summary
 
 CI currently runs visual regression in metric-only mode for normal development and release work. That means pull requests and routine version bumps still get full visual artifacts, diff images, and summary metrics without blocking merges.
+
+Each CI run also emits a browsable `index.html` visual report artifact under `test-results/visual-regression/`, so a pull request can be inspected slide-by-slide without digging through raw files one at a time.
 
 Hard threshold enforcement is still available through `PPTX_VISUAL_ENFORCE=1` for local work and for future major release gates such as `1.0.0` or `2.0.0`, where a stricter visual freeze makes more sense.
 

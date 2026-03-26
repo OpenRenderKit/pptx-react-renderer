@@ -35,7 +35,7 @@ try {
     lines.push(
       ...summary.metrics.map(
         (metric) =>
-          `| ${metric.slide} | ${Number(metric.diffRatio).toFixed(4)} | ${metric.mismatchPixels} | ${metric.width}x${metric.height} |`,
+          `| ${metric.slide} | ${Number(metric.diffRatio).toFixed(4)} | ${metric.mismatchPixels} | ${metric.comparedWidth}x${metric.comparedHeight} |`,
       ),
     );
     lines.push("");
