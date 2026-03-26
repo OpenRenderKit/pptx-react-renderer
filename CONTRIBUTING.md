@@ -43,16 +43,13 @@ Before `1.0.0`, release labels are softened on purpose:
 - `release:minor` becomes a semver patch bump
 - `release:patch` remains a patch bump
 
-The first automated publish uses the version already in `package.json`. Later publishes use the most recent npm version as the base for the next bump.
+Later publishes use the most recent npm version as the base for the next bump.
 
-Bootstrap note:
-
-- either add an `NPM_TOKEN` repository secret so GitHub Actions can publish the first version
-- or publish the first version manually, configure npm trusted publishing for `.github/workflows/publish.yml`, and then rely on merge-to-main releases afterward
+Trusted publishing is already configured for `.github/workflows/publish.yml`. The steady-state release path should not require an `NPM_TOKEN` secret.
 
 ## Repository Rules
 
-- `main` is branch-protected with required PR review, conversation resolution, linear history, and the `verify` status check
+- `main` is branch-protected with required PR review, conversation resolution, linear history, and the `verify` and `release-intent` status checks
 - release tags matching `v*` are protected against non-fast-forward updates and deletion
 
 ## Scope

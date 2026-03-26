@@ -183,11 +183,12 @@ The sanitized fixture preserves slide structure, SmartArt/diagram XML, tables, g
   - `release:minor` becomes a semver patch bump, for example `0.2.3 -> 0.2.4`
   - `release:patch` stays a patch bump
   - `release:skip` suppresses publication for that merge
-- On the first publish, the workflow uses the version already present in `package.json`.
-- For the bootstrap release, either set a repository secret named `NPM_TOKEN` or publish the first version manually so the package exists on npm.
-- After the package exists, configure npm trusted publishing for `OpenRenderKit/pptx-react-renderer` and `.github/workflows/publish.yml`, then you can remove `NPM_TOKEN`.
+- npm trusted publishing is configured for `OpenRenderKit/pptx-react-renderer` and `.github/workflows/publish.yml`.
+- The package is currently published as `pptx-react-renderer@0.1.1`.
 - `main` is intended to stay releasable; use branches and pull requests for normal changes.
 - Release tags matching `v*` are protected against rewrites and deletions.
+
+See [docs/RELEASING.md](./docs/RELEASING.md) for the concrete release flow and recovery steps.
 
 ## Testing Strategy
 
