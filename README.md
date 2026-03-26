@@ -160,6 +160,7 @@ pnpm run fixtures:generate
 pnpm run verify
 pnpm run pack:check
 pnpm run test:browser
+pnpm run test:visual
 ```
 
 Use Node.js 20 or newer for local development. The current Vitest/Vite toolchain in this repo does not support Node 18.
@@ -195,7 +196,10 @@ See [docs/RELEASING.md](./docs/RELEASING.md) for the concrete release flow and r
 - unit and parser/renderer regression tests run in `vitest` with `jsdom`
 - committed `.pptx` fixtures under `test/fixtures/real/` cover realistic parse and render paths
 - a Playwright smoke test renders a real fixture in Chromium against the built package
+- a visual-regression path renders the committed complex fixture through LibreOffice, screenshots selected slides from the browser renderer, and diffs them with `pixelmatch`
 - a sanitized golden deck derived from a complex local source presentation is committed so CI can exercise realistic SmartArt, tables, groups, and mixed media without depending on private files
+
+`pnpm run test:visual` requires LibreOffice (`soffice`) and Poppler (`pdftoppm`) locally. See [docs/TESTING.md](./docs/TESTING.md) for the visual-regression model, local prerequisites, and GitHub Actions behavior.
 
 ## Contributing
 

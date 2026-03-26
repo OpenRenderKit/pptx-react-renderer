@@ -63,3 +63,36 @@ jobs:
           path: |
             playwright-report
             test-results
+
+  visual-regression:
+    runs-on: ubuntu-latest
+    env:
+      PPTX_VISUAL_ENFORCE: "0"
+      PPTX_VISUAL_SLIDES: "1,4,5,8"
+      PPTX_VISUAL_MAX_DIFF_RATIO: "0.45"
+      PPTX_VISUAL_MEAN_DIFF_RATIO: "0.25"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run fixtures:generate
+      - name: Install visual regression system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreoffice poppler-utils
+      - run: npx playwright install --with-deps chromium
+      - run: pnpm run test:visual
+      - name: Append visual regression summary
+        if: always()
+        run: node scripts/write-visual-summary.mjs >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: visual-regression-artifacts
+          path: |
+            playwright-report
+            test-results/visual-regression
