@@ -102,7 +102,7 @@ const html = `<!DOCTYPE html>
     <main>
       <section class="hero">
         <h1>Visual PR Previews</h1>
-        <p>GitHub Pages snapshots for `pptx-react-renderer` pull requests. Each preview publishes two reports: `PR vs main` to isolate renderer changes, and `Office vs PR` to measure fidelity against the office-rendered baseline.</p>
+        <p>GitHub Pages snapshots for <code>pptx-react-renderer</code> pull requests. Each preview publishes two reports: <code>PR vs main</code> to isolate renderer changes, and <code>Office vs PR</code> to measure fidelity against the office-rendered baseline.</p>
       </section>
       <section class="grid">
         ${cards || "<p>No PR previews published yet.</p>"}
