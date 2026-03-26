@@ -104,6 +104,8 @@ CI currently runs visual regression in metric-only mode for normal development a
 
 Each CI run also emits a browsable `index.html` visual report artifact under `test-results/visual-regression/`, so a pull request can be inspected slide-by-slide without digging through raw files one at a time.
 
+On pull requests, the workflow also downloads the latest successful `main` visual-regression artifact, compares `main` renderer screenshots against the current branch renderer screenshots, uploads a second HTML report under `test-results/visual-pr-comparison/`, and posts a PR comment summarizing the largest slide-level renderer changes.
+
 Hard threshold enforcement is still available through `PPTX_VISUAL_ENFORCE=1` for local work and for future major release gates such as `1.0.0` or `2.0.0`, where a stricter visual freeze makes more sense.
 
 As fidelity improves, keep tightening thresholds, and reserve CI-blocking visual gates for explicit major-release checkpoints rather than every `0.x` or `x.y.z` release.
