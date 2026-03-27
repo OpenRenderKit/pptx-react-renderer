@@ -1,0 +1,37 @@
+{
+  "caseId": "table-layout",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "diffRatio": 0.18114583333333334,
+      "mismatchPixels": 166944,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "maxDiffRatio": 0.18114583333333334,
+  "meanDiffRatio": 0.18114583333333334,
+  "topSlides": [
+    {
+      "slide": 1,
+      "diffRatio": 0.18114583333333334,
+      "mismatchPixels": 166944,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.20743923611111112,
+    "meanObservedDiffRatio": 0.20743923611111112
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.2547048611111111,
+    "meanObservedDiffRatio": 0.2547048611111111
+  }
+}

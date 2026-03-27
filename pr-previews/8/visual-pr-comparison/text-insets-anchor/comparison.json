@@ -1,0 +1,37 @@
+{
+  "caseId": "text-insets-anchor",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "maxDiffRatio": 0,
+  "meanDiffRatio": 0,
+  "topSlides": [
+    {
+      "slide": 1,
+      "diffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.18720811631944445,
+    "meanObservedDiffRatio": 0.18720811631944445
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.18720811631944445,
+    "meanObservedDiffRatio": 0.18720811631944445
+  }
+}

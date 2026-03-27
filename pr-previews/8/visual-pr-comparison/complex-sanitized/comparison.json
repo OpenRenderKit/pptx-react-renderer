@@ -1,0 +1,88 @@
+{
+  "caseId": "complex-sanitized",
+  "compared": true,
+  "selectedSlides": [
+    1,
+    4,
+    5,
+    8
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "diffRatio": 0.026830512152777777,
+      "mismatchPixels": 24727,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 4,
+      "diffRatio": 0.4025162760416667,
+      "mismatchPixels": 370959,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 5,
+      "diffRatio": 0.12239366319444445,
+      "mismatchPixels": 112798,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 8,
+      "diffRatio": 0.05049696180555555,
+      "mismatchPixels": 46538,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "maxDiffRatio": 0.4025162760416667,
+  "meanDiffRatio": 0.1505593532986111,
+  "topSlides": [
+    {
+      "slide": 4,
+      "diffRatio": 0.4025162760416667,
+      "mismatchPixels": 370959,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 5,
+      "diffRatio": 0.12239366319444445,
+      "mismatchPixels": 112798,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 8,
+      "diffRatio": 0.05049696180555555,
+      "mismatchPixels": 46538,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    },
+    {
+      "slide": 1,
+      "diffRatio": 0.026830512152777777,
+      "mismatchPixels": 24727,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.9756532118055555,
+    "meanObservedDiffRatio": 0.5728483072916667
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.9852875434027778,
+    "meanObservedDiffRatio": 0.5249416775173611
+  }
+}

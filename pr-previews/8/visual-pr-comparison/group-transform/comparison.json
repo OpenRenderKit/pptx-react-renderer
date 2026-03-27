@@ -1,0 +1,37 @@
+{
+  "caseId": "group-transform",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "diffRatio": 0.0590625,
+      "mismatchPixels": 54432,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "maxDiffRatio": 0.0590625,
+  "meanDiffRatio": 0.0590625,
+  "topSlides": [
+    {
+      "slide": 1,
+      "diffRatio": 0.0590625,
+      "mismatchPixels": 54432,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.10210503472222222,
+    "meanObservedDiffRatio": 0.10210503472222222
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.10210503472222222,
+    "meanObservedDiffRatio": 0.10210503472222222
+  }
+}

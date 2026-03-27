@@ -1,0 +1,816 @@
+{
+  "baselineDir": "/home/runner/work/pptx-react-renderer/pptx-react-renderer/.tmp/visual-baseline/test-results/visual-regression",
+  "currentDir": "/home/runner/work/pptx-react-renderer/pptx-react-renderer/test-results/visual-regression",
+  "generatedAt": "2026-03-27T04:02:11.699Z",
+  "cases": [
+    {
+      "caseId": "bullets-numbering",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.016333550347222222,
+        "meanObservedDiffRatio": 0.016333550347222222
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.016333550347222222,
+        "meanObservedDiffRatio": 0.016333550347222222
+      }
+    },
+    {
+      "caseId": "complex-sanitized",
+      "compared": true,
+      "selectedSlides": [
+        1,
+        4,
+        5,
+        8
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.026830512152777777,
+          "mismatchPixels": 24727,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 4,
+          "diffRatio": 0.4025162760416667,
+          "mismatchPixels": 370959,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 5,
+          "diffRatio": 0.12239366319444445,
+          "mismatchPixels": 112798,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 8,
+          "diffRatio": 0.05049696180555555,
+          "mismatchPixels": 46538,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.4025162760416667,
+      "meanDiffRatio": 0.1505593532986111,
+      "topSlides": [
+        {
+          "slide": 4,
+          "diffRatio": 0.4025162760416667,
+          "mismatchPixels": 370959,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 5,
+          "diffRatio": 0.12239366319444445,
+          "mismatchPixels": 112798,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 8,
+          "diffRatio": 0.05049696180555555,
+          "mismatchPixels": 46538,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 1,
+          "diffRatio": 0.026830512152777777,
+          "mismatchPixels": 24727,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.9756532118055555,
+        "meanObservedDiffRatio": 0.5728483072916667
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.9852875434027778,
+        "meanObservedDiffRatio": 0.5249416775173611
+      }
+    },
+    {
+      "caseId": "diagram-fallback",
+      "compared": true,
+      "selectedSlides": [
+        2,
+        10
+      ],
+      "slides": [
+        {
+          "slide": 2,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 10,
+          "diffRatio": 0.06198893229166667,
+          "mismatchPixels": 57129,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.06198893229166667,
+      "meanDiffRatio": 0.030994466145833333,
+      "topSlides": [
+        {
+          "slide": 10,
+          "diffRatio": 0.06198893229166667,
+          "mismatchPixels": 57129,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 2,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.7671430121527778,
+        "meanObservedDiffRatio": 0.7101139322916667
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.7671430121527778,
+        "meanObservedDiffRatio": 0.7098725043402778
+      }
+    },
+    {
+      "caseId": "group-transform",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.0590625,
+          "mismatchPixels": 54432,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.0590625,
+      "meanDiffRatio": 0.0590625,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.0590625,
+          "mismatchPixels": 54432,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.10210503472222222,
+        "meanObservedDiffRatio": 0.10210503472222222
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.10210503472222222,
+        "meanObservedDiffRatio": 0.10210503472222222
+      }
+    },
+    {
+      "caseId": "image-cropping",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.028976779513888887,
+        "meanObservedDiffRatio": 0.028976779513888887
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.028976779513888887,
+        "meanObservedDiffRatio": 0.028976779513888887
+      }
+    },
+    {
+      "caseId": "image-placement",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.023319227430555554,
+        "meanObservedDiffRatio": 0.023319227430555554
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.023319227430555554,
+        "meanObservedDiffRatio": 0.023319227430555554
+      }
+    },
+    {
+      "caseId": "nested-groups",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.015,
+          "mismatchPixels": 13824,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.015,
+      "meanDiffRatio": 0.015,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.015,
+          "mismatchPixels": 13824,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.25619140625,
+        "meanObservedDiffRatio": 0.25619140625
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.2561349826388889,
+        "meanObservedDiffRatio": 0.2561349826388889
+      }
+    },
+    {
+      "caseId": "paragraph-spacing",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.016969401041666665,
+        "meanObservedDiffRatio": 0.016969401041666665
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.016969401041666665,
+        "meanObservedDiffRatio": 0.016969401041666665
+      }
+    },
+    {
+      "caseId": "slop-sample",
+      "compared": true,
+      "selectedSlides": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.02265842013888889,
+          "mismatchPixels": 20882,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 2,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 3,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 4,
+          "diffRatio": 0.3952756076388889,
+          "mismatchPixels": 364286,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 5,
+          "diffRatio": 0.116806640625,
+          "mismatchPixels": 107649,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 6,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 7,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 8,
+          "diffRatio": 0.04286241319444444,
+          "mismatchPixels": 39502,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 9,
+          "diffRatio": 0.012951388888888889,
+          "mismatchPixels": 11936,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 10,
+          "diffRatio": 0.061293402777777777,
+          "mismatchPixels": 56488,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 11,
+          "diffRatio": 0.025029296875,
+          "mismatchPixels": 23067,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 12,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.3952756076388889,
+      "meanDiffRatio": 0.0564064308449074,
+      "topSlides": [
+        {
+          "slide": 4,
+          "diffRatio": 0.3952756076388889,
+          "mismatchPixels": 364286,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 5,
+          "diffRatio": 0.116806640625,
+          "mismatchPixels": 107649,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 10,
+          "diffRatio": 0.061293402777777777,
+          "mismatchPixels": 56488,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 8,
+          "diffRatio": 0.04286241319444444,
+          "mismatchPixels": 39502,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        },
+        {
+          "slide": 11,
+          "diffRatio": 0.025029296875,
+          "mismatchPixels": 23067,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.8109396701388889,
+        "meanObservedDiffRatio": 0.40760308159722225
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.8261111111111111,
+        "meanObservedDiffRatio": 0.3873049587673611
+      }
+    },
+    {
+      "caseId": "table-layout",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.18114583333333334,
+          "mismatchPixels": 166944,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.18114583333333334,
+      "meanDiffRatio": 0.18114583333333334,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.18114583333333334,
+          "mismatchPixels": 166944,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.20743923611111112,
+        "meanObservedDiffRatio": 0.20743923611111112
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.2547048611111111,
+        "meanObservedDiffRatio": 0.2547048611111111
+      }
+    },
+    {
+      "caseId": "text-insets-anchor",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.18720811631944445,
+        "meanObservedDiffRatio": 0.18720811631944445
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.18720811631944445,
+        "meanObservedDiffRatio": 0.18720811631944445
+      }
+    },
+    {
+      "caseId": "text-layout",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.025418836805555556,
+        "meanObservedDiffRatio": 0.025418836805555556
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.025418836805555556,
+        "meanObservedDiffRatio": 0.025418836805555556
+      }
+    },
+    {
+      "caseId": "theme-colors",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.1125,
+          "mismatchPixels": 103680,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.1125,
+      "meanDiffRatio": 0.1125,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.1125,
+          "mismatchPixels": 103680,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.08507703993055556,
+        "meanObservedDiffRatio": 0.08507703993055556
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.12257703993055556,
+        "meanObservedDiffRatio": 0.12257703993055556
+      }
+    },
+    {
+      "caseId": "theme-luminance",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.175,
+          "mismatchPixels": 161280,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0.175,
+      "meanDiffRatio": 0.175,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0.175,
+          "mismatchPixels": 161280,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.18469075520833333,
+        "meanObservedDiffRatio": 0.18469075520833333
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.18469075520833333,
+        "meanObservedDiffRatio": 0.18469075520833333
+      }
+    },
+    {
+      "caseId": "unsupported-chart",
+      "compared": true,
+      "selectedSlides": [
+        1
+      ],
+      "slides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0,
+      "topSlides": [
+        {
+          "slide": 1,
+          "diffRatio": 0,
+          "mismatchPixels": 0,
+          "totalPixels": 921600,
+          "comparedWidth": 1280,
+          "comparedHeight": 720
+        }
+      ],
+      "baselineMetrics": {
+        "maxObservedDiffRatio": 0.012752821180555556,
+        "meanObservedDiffRatio": 0.012752821180555556
+      },
+      "currentMetrics": {
+        "maxObservedDiffRatio": 0.012752821180555556,
+        "meanObservedDiffRatio": 0.012752821180555556
+      }
+    }
+  ],
+  "comparedCases": 15,
+  "totalCases": 15,
+  "changedCases": 8,
+  "worstCases": [
+    {
+      "caseId": "complex-sanitized",
+      "maxDiffRatio": 0.4025162760416667,
+      "meanDiffRatio": 0.1505593532986111
+    },
+    {
+      "caseId": "slop-sample",
+      "maxDiffRatio": 0.3952756076388889,
+      "meanDiffRatio": 0.0564064308449074
+    },
+    {
+      "caseId": "table-layout",
+      "maxDiffRatio": 0.18114583333333334,
+      "meanDiffRatio": 0.18114583333333334
+    },
+    {
+      "caseId": "theme-luminance",
+      "maxDiffRatio": 0.175,
+      "meanDiffRatio": 0.175
+    },
+    {
+      "caseId": "theme-colors",
+      "maxDiffRatio": 0.1125,
+      "meanDiffRatio": 0.1125
+    },
+    {
+      "caseId": "diagram-fallback",
+      "maxDiffRatio": 0.06198893229166667,
+      "meanDiffRatio": 0.030994466145833333
+    },
+    {
+      "caseId": "group-transform",
+      "maxDiffRatio": 0.0590625,
+      "meanDiffRatio": 0.0590625
+    },
+    {
+      "caseId": "nested-groups",
+      "maxDiffRatio": 0.015,
+      "meanDiffRatio": 0.015
+    },
+    {
+      "caseId": "bullets-numbering",
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0
+    },
+    {
+      "caseId": "image-cropping",
+      "maxDiffRatio": 0,
+      "meanDiffRatio": 0
+    }
+  ]
+}
