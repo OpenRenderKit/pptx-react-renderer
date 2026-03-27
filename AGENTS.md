@@ -48,10 +48,18 @@ Run this when browser rendering, bundling, or fixture handling changes:
 pnpm run test:browser
 ```
 
+Run this when you need a real visual comparison against office-rendered slides:
+
+```bash
+pnpm run test:visual
+```
+
 ## Fixtures
 
 - Realistic committed fixtures live under `test/fixtures/real/`.
 - `test/fixtures/real/complex-sanitized.pptx` is the main regression deck for SmartArt, tables, groups, diagrams, and mixed media.
+- Generated edge-case visual fixtures are created under `.tmp/visual-fixtures/` during `pnpm run test:visual`.
+- Visual-regression reference images are generated locally and in CI from the committed fixture; do not commit generated reference PNGs.
 - Regenerate the sanitized complex fixture only from a local source deck using:
 
 ```bash
@@ -63,7 +71,7 @@ PPTX_COMPLEX_SOURCE="/absolute/path/to/source-deck.pptx" pnpm run fixtures:sanit
 ## Known Technical Gaps
 
 - Grouped shapes are not fully reconstructed.
-- `graphicFrame` handling is still partial, especially charts and embedded tables.
+- `graphicFrame` handling is still partial, especially charts.
 - SmartArt/diagram fidelity is incomplete.
 - Theme/color fidelity is still shallow compared with OOXML.
 - Custom geometry support skips important cases such as arc conversion.

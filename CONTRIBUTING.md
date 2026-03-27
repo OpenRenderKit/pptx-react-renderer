@@ -28,7 +28,10 @@ This command is intended for maintainers. CI uses the committed sanitized fixtur
 - run `pnpm run verify` before opening a pull request
 - run `pnpm run pack:check` if you change package metadata or published files
 - run `pnpm run test:browser` when you change browser-facing render behavior, bundling, or fixture handling
+- run `pnpm run test:visual` when you change layout, text flow, image placement, or other fidelity-sensitive rendering behavior
 - if you update the complex regression deck, rerun `pnpm run verify` and `pnpm run test:browser` before pushing
+
+`pnpm run test:visual` requires LibreOffice (`soffice`) and Poppler (`pdftoppm`) locally. It generates focused edge-case decks and office-rendered references on demand. GitHub Actions runs the same suite for metrics, diff images, and an HTML side-by-side report artifact on every change. On pull requests, Actions also compares the current branch renderer output against the latest successful `main` visual artifact, posts a summary comment back to the PR, and publishes PR preview reports to GitHub Pages for stable browser-viewable links. Hard enforcement is reserved for local investigation and future major-release gates. See [docs/TESTING.md](./docs/TESTING.md) for setup details and the current visual-regression model.
 
 ## Release Process
 
@@ -56,4 +59,4 @@ Trusted publishing is already configured for `.github/workflows/publish.yml`. Th
 
 This package targets browser-like environments. Changes that require Node-only or server-only behavior should stay optional and must not break the browser-first API.
 
-The renderer is still under active development. In particular, grouped objects, charts, table graphic frames, and complex SmartArt/diagram layouts are not fully implemented yet, so changes in those areas should be explicit about current behavior and known regressions.
+The renderer is still under active development. In particular, charts, complex SmartArt/diagram layouts, theme fidelity, and PowerPoint-level text/layout matching are not fully implemented yet, so changes in those areas should be explicit about current behavior and known regressions.

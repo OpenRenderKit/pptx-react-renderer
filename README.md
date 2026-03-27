@@ -160,6 +160,7 @@ pnpm run fixtures:generate
 pnpm run verify
 pnpm run pack:check
 pnpm run test:browser
+pnpm run test:visual
 ```
 
 Use Node.js 20 or newer for local development. The current Vitest/Vite toolchain in this repo does not support Node 18.
@@ -195,7 +196,11 @@ See [docs/RELEASING.md](./docs/RELEASING.md) for the concrete release flow and r
 - unit and parser/renderer regression tests run in `vitest` with `jsdom`
 - committed `.pptx` fixtures under `test/fixtures/real/` cover realistic parse and render paths
 - a Playwright smoke test renders a real fixture in Chromium against the built package
+- a case-based visual-regression path renders real PPTX fixtures through LibreOffice, screenshots selected slides from the browser renderer, and diffs them with `pixelmatch`
 - a sanitized golden deck derived from a complex local source presentation is committed so CI can exercise realistic SmartArt, tables, groups, and mixed media without depending on private files
+- a committed `Slop-Sample` deck compares every slide in CI, including theme styling, placeholder text, notes-safe content, tables, images, and diagram-heavy layouts
+
+`pnpm run test:visual` requires LibreOffice (`soffice`) and Poppler (`pdftoppm`) locally. CI runs the visual suite on every change and publishes metrics, diff images, and an HTML side-by-side report artifact, but it does not block routine `0.x` or `x.y.z` work. On pull requests, CI also compares the current branch renderer output against the latest successful `main` visual artifact, posts a PR comment summarizing the largest slide-level changes, and publishes preview reports to GitHub Pages so the comment can link to stable, browser-viewable outputs. Hard threshold enforcement remains available locally and for future major-release gates. See [docs/TESTING.md](./docs/TESTING.md) for the visual-regression model, local prerequisites, and GitHub Actions behavior.
 
 ## Contributing
 

@@ -6,3 +6,4 @@ coverage
 test/browser/harness/bundle.js
 playwright-report
 test-results
+.tmp

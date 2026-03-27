@@ -90,7 +90,11 @@ jobs:
               .sort((a, b) => new Date(b.merged_at) - new Date(a.merged_at));
 
             if (mergedPullRequests.length === 0) {
-              core.setFailed(`No merged pull request was associated with commit ${context.sha}.`);
+              core.setOutput("number", "");
+              core.setOutput("label", "release:skip");
+              core.notice(
+                `No merged pull request was associated with commit ${context.sha}. Skipping publish for a direct push.`
+              );
               return;
             }
 
@@ -142,8 +146,6 @@ jobs:
       - if: steps.plan.outputs.should_publish == 'true'
         run: npm version "${{ steps.plan.outputs.next_version }}" --no-git-tag-version --allow-same-version
       - if: steps.plan.outputs.should_publish == 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
       - if: steps.plan.outputs.should_publish == 'true'
         env:
