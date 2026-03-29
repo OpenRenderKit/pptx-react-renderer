@@ -11,6 +11,17 @@ const previewDirs = (await readdir(previewsRoot, { withFileTypes: true }))
   .map((entry) => entry.name)
   .sort((left, right) => Number(right) - Number(left));
 
+const playgroundCard = `
+      <article class="card playground-card">
+        <div class="eyebrow">Permanent Demo</div>
+        <h2>Playground</h2>
+        <p>Upload a local <code>.pptx</code> and preview it with the browser renderer, live in GitHub Pages.</p>
+        <div class="actions">
+          <a href="./playground/">Open playground</a>
+        </div>
+      </article>
+    `;
+
 const cards = previewDirs
   .map(
     (prNumber) => `
@@ -66,6 +77,11 @@ const html = `<!DOCTYPE html>
         border: 1px solid rgba(207, 217, 234, 0.9);
         box-shadow: 0 24px 70px rgba(17, 32, 58, 0.08);
       }
+      .playground-card {
+        background:
+          radial-gradient(circle at top right, rgba(16, 140, 123, 0.12), transparent 32%),
+          rgba(255, 255, 255, 0.9);
+      }
       .eyebrow {
         width: fit-content;
         padding: 6px 10px;
@@ -92,6 +108,10 @@ const html = `<!DOCTYPE html>
       .actions a:last-child {
         background: linear-gradient(135deg, #0b7a72 0%, #11948a 100%);
       }
+      .playground-card .actions a:last-child,
+      .playground-card .actions a:only-child {
+        background: linear-gradient(135deg, #0b7a72 0%, #11948a 100%);
+      }
       @media (max-width: 680px) {
         body { padding: 24px 16px 48px; }
         .hero { padding: 22px; }
@@ -101,10 +121,11 @@ const html = `<!DOCTYPE html>
   <body>
     <main>
       <section class="hero">
-        <h1>Visual PR Previews</h1>
-        <p>GitHub Pages snapshots for <code>pptx-react-renderer</code> pull requests. Each preview publishes two reports: <code>PR vs main</code> to isolate renderer changes, and <code>Office vs PR</code> to measure fidelity against the office-rendered baseline.</p>
+        <h1>Pages Surfaces</h1>
+        <p>GitHub Pages for <code>pptx-react-renderer</code>. The permanent playground lets you render local presentations in-browser, and PR previews publish both <code>PR vs main</code> and <code>Office vs PR</code> visual reports for renderer review.</p>
       </section>
       <section class="grid">
+        ${playgroundCard}
         ${cards || "<p>No PR previews published yet.</p>"}
       </section>
     </main>
