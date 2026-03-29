@@ -140,6 +140,8 @@ export interface ShapeElement extends BaseElement {
   strokeWidth?: number;
   strokeDash?: string; // dashed, dotted, etc.
   roundedCorners?: number; // border radius
+  pathData?: ShapePath[];
+  viewBox?: { x: number; y: number; width: number; height: number };
 }
 
 export interface GradientFill {
