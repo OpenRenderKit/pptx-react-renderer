@@ -46,6 +46,7 @@ for (const caseId of caseDirs) {
 
   const currentMetrics = JSON.parse(await readFile(currentMetricsPath, "utf8"));
   const baselineMetrics = JSON.parse(await readFile(baselineMetricsPath, "utf8"));
+  const baselineSlidesByNumber = new Map((baselineMetrics.metrics || []).map((metric) => [metric.slide, metric]));
   const outputCaseDir = path.join(outputRoot, caseId);
 
   await mkdir(outputCaseDir, { recursive: true });
@@ -80,15 +81,22 @@ for (const caseId of caseDirs) {
       },
     );
     const totalPixels = comparisonWidth * comparisonHeight;
-    const diffRatio = mismatchPixels / totalPixels;
+    const branchDiffRatio = mismatchPixels / totalPixels;
+    const baselineSlideMetrics = baselineSlidesByNumber.get(metric.slide);
+    const baselineOfficeDiffRatio = Number(baselineSlideMetrics?.diffRatio || 0);
+    const currentOfficeDiffRatio = Number(metric.diffRatio || 0);
+    const officeDeltaDiffRatio = currentOfficeDiffRatio - baselineOfficeDiffRatio;
 
     slides.push({
       slide: metric.slide,
-      diffRatio,
+      branchDiffRatio,
       mismatchPixels,
       totalPixels,
       comparedWidth: comparisonWidth,
       comparedHeight: comparisonHeight,
+      baselineOfficeDiffRatio,
+      currentOfficeDiffRatio,
+      officeDeltaDiffRatio,
     });
 
     await Promise.all([
@@ -98,9 +106,21 @@ for (const caseId of caseDirs) {
     ]);
   }
 
-  const maxDiffRatio = slides.reduce((max, slide) => Math.max(max, slide.diffRatio), 0);
-  const meanDiffRatio = slides.reduce((sum, slide) => sum + slide.diffRatio, 0) / Math.max(slides.length, 1);
-  const topSlides = [...slides].sort((left, right) => right.diffRatio - left.diffRatio).slice(0, 5);
+  const maxDiffRatio = slides.reduce((max, slide) => Math.max(max, slide.branchDiffRatio), 0);
+  const meanDiffRatio = slides.reduce((sum, slide) => sum + slide.branchDiffRatio, 0) / Math.max(slides.length, 1);
+  const topSlides = [...slides].sort((left, right) => right.branchDiffRatio - left.branchDiffRatio).slice(0, 5);
+  const officeMeanDelta =
+    Number(currentMetrics.meanObservedDiffRatio || 0) - Number(baselineMetrics.meanObservedDiffRatio || 0);
+  const officeMaxDelta =
+    Number(currentMetrics.maxObservedDiffRatio || 0) - Number(baselineMetrics.maxObservedDiffRatio || 0);
+  const topRegressedSlides = [...slides]
+    .filter((slide) => slide.officeDeltaDiffRatio > 0)
+    .sort((left, right) => right.officeDeltaDiffRatio - left.officeDeltaDiffRatio)
+    .slice(0, 5);
+  const topImprovedSlides = [...slides]
+    .filter((slide) => slide.officeDeltaDiffRatio < 0)
+    .sort((left, right) => left.officeDeltaDiffRatio - right.officeDeltaDiffRatio)
+    .slice(0, 5);
   const summary = {
     caseId,
     compared: true,
@@ -109,6 +129,10 @@ for (const caseId of caseDirs) {
     maxDiffRatio,
     meanDiffRatio,
     topSlides,
+    officeMeanDelta,
+    officeMaxDelta,
+    topRegressedSlides,
+    topImprovedSlides,
     baselineMetrics: {
       maxObservedDiffRatio: baselineMetrics.maxObservedDiffRatio,
       meanObservedDiffRatio: baselineMetrics.meanObservedDiffRatio,
@@ -126,6 +150,26 @@ for (const caseId of caseDirs) {
 comparison.comparedCases = comparison.cases.filter((entry) => entry.compared).length;
 comparison.totalCases = comparison.cases.length;
 comparison.changedCases = comparison.cases.filter((entry) => entry.compared && entry.maxDiffRatio > 0).length;
+comparison.regressedCases = comparison.cases
+  .filter((entry) => entry.compared && entry.officeMeanDelta > 0)
+  .sort((left, right) => right.officeMeanDelta - left.officeMeanDelta)
+  .slice(0, 10)
+  .map((entry) => ({
+    caseId: entry.caseId,
+    officeMeanDelta: entry.officeMeanDelta,
+    officeMaxDelta: entry.officeMaxDelta,
+    maxDiffRatio: entry.maxDiffRatio,
+  }));
+comparison.improvedCases = comparison.cases
+  .filter((entry) => entry.compared && entry.officeMeanDelta < 0)
+  .sort((left, right) => left.officeMeanDelta - right.officeMeanDelta)
+  .slice(0, 10)
+  .map((entry) => ({
+    caseId: entry.caseId,
+    officeMeanDelta: entry.officeMeanDelta,
+    officeMaxDelta: entry.officeMaxDelta,
+    maxDiffRatio: entry.maxDiffRatio,
+  }));
 comparison.worstCases = [...comparison.cases]
   .filter((entry) => entry.compared)
   .sort((left, right) => right.maxDiffRatio - left.maxDiffRatio)
@@ -179,14 +223,21 @@ function buildComment(summary) {
   }
   lines.push("");
 
+  lines.push("### Renderer Change Ranking");
+  lines.push("");
   lines.push("| Case | Max Diff | Mean Diff | Top Changed Slides |");
   lines.push("| --- | ---: | ---: | --- |");
 
   for (const entry of summary.worstCases) {
     const caseSummary = summary.cases.find((item) => item.caseId === entry.caseId);
-    const topSlides = caseSummary.topSlides.map((slide) => `${slide.slide} (${slide.diffRatio.toFixed(4)})`).join(", ");
+    const topSlides = caseSummary.topSlides
+      .map((slide) => `${slide.slide} (${slide.branchDiffRatio.toFixed(4)})`)
+      .join(", ");
+    const caseLink = reportBaseUrl
+      ? `[${entry.caseId}](${reportBaseUrl}/visual-pr-comparison/index.html#case-${entry.caseId})`
+      : entry.caseId;
     lines.push(
-      `| ${entry.caseId} | ${entry.maxDiffRatio.toFixed(4)} | ${entry.meanDiffRatio.toFixed(4)} | ${topSlides || "none"} |`,
+      `| ${caseLink} | ${entry.maxDiffRatio.toFixed(4)} | ${entry.meanDiffRatio.toFixed(4)} | ${topSlides || "none"} |`,
     );
   }
 
@@ -198,6 +249,50 @@ function buildComment(summary) {
 
   lines.push("");
 
+  if (summary.regressedCases.length > 0) {
+    lines.push("### Most Regressed Vs Office Reference");
+    lines.push("");
+    lines.push("| Case | Mean Delta | Max Delta | Worst Slide Delta |");
+    lines.push("| --- | ---: | ---: | --- |");
+
+    for (const entry of summary.regressedCases.slice(0, 5)) {
+      const caseSummary = summary.cases.find((item) => item.caseId === entry.caseId);
+      const worstSlide = caseSummary.topRegressedSlides[0];
+      const caseLink = reportBaseUrl
+        ? `[${entry.caseId}](${reportBaseUrl}/visual-regression/index.html#case-${entry.caseId})`
+        : entry.caseId;
+      lines.push(
+        `| ${caseLink} | +${entry.officeMeanDelta.toFixed(4)} | +${entry.officeMaxDelta.toFixed(4)} | ${
+          worstSlide ? `${worstSlide.slide} (+${worstSlide.officeDeltaDiffRatio.toFixed(4)})` : "none"
+        } |`,
+      );
+    }
+
+    lines.push("");
+  }
+
+  if (summary.improvedCases.length > 0) {
+    lines.push("### Most Improved Vs Office Reference");
+    lines.push("");
+    lines.push("| Case | Mean Delta | Max Delta | Best Slide Delta |");
+    lines.push("| --- | ---: | ---: | --- |");
+
+    for (const entry of summary.improvedCases.slice(0, 5)) {
+      const caseSummary = summary.cases.find((item) => item.caseId === entry.caseId);
+      const bestSlide = caseSummary.topImprovedSlides[0];
+      const caseLink = reportBaseUrl
+        ? `[${entry.caseId}](${reportBaseUrl}/visual-regression/index.html#case-${entry.caseId})`
+        : entry.caseId;
+      lines.push(
+        `| ${caseLink} | ${entry.officeMeanDelta.toFixed(4)} | ${entry.officeMaxDelta.toFixed(4)} | ${
+          bestSlide ? `${bestSlide.slide} (${bestSlide.officeDeltaDiffRatio.toFixed(4)})` : "none"
+        } |`,
+      );
+    }
+
+    lines.push("");
+  }
+
   const previewCases = summary.worstCases.filter((entry) => entry.maxDiffRatio > 0).slice(0, 3);
   if (previewCases.length > 0 && reportBaseUrl) {
     lines.push("### Preview Slides");
@@ -208,7 +303,9 @@ function buildComment(summary) {
       const topSlide = caseSummary.topSlides[0];
       const slideLabel = `slide-${String(topSlide.slide).padStart(2, "0")}`;
       const caseUrl = `${reportBaseUrl}/visual-pr-comparison/${entry.caseId}`;
-      lines.push(`**${entry.caseId}** slide ${topSlide.slide} ([open case](${caseUrl}/comparison.json))`);
+      lines.push(
+        `**[${entry.caseId}](${reportBaseUrl}/visual-pr-comparison/index.html#case-${entry.caseId})** slide ${topSlide.slide}`,
+      );
       lines.push("");
       lines.push("<table>");
       lines.push("<tr><th>Main</th><th>PR</th><th>Diff</th></tr>");
@@ -228,11 +325,24 @@ function buildComment(summary) {
 }
 
 function buildHtml(summary) {
+  const navCards = summary.cases
+    .filter((entry) => entry.compared)
+    .map(
+      (entry) => `
+        <a class="nav-card" href="#case-${entry.caseId}">
+          <strong>${escapeHtml(entry.caseId)}</strong>
+          <span>Renderer diff ${entry.maxDiffRatio.toFixed(4)}</span>
+          <span>Office delta ${entry.officeMeanDelta >= 0 ? "+" : ""}${entry.officeMeanDelta.toFixed(4)}</span>
+        </a>
+      `,
+    )
+    .join("\n");
+
   const cards = summary.cases
     .map((entry) => {
       if (!entry.compared) {
         return `
-          <section class="case">
+          <section class="case" id="case-${entry.id}">
             <h2>${escapeHtml(entry.id)}</h2>
             <p>No comparison available: ${escapeHtml(entry.reason)}</p>
           </section>
@@ -246,7 +356,8 @@ function buildHtml(summary) {
             <section class="slide-card">
               <header>
                 <h3>Slide ${slide.slide}</h3>
-                <p>Diff ratio ${slide.diffRatio.toFixed(4)}</p>
+                <p>Renderer diff ${slide.branchDiffRatio.toFixed(4)}</p>
+                <p>Office delta ${slide.officeDeltaDiffRatio >= 0 ? "+" : ""}${slide.officeDeltaDiffRatio.toFixed(4)}</p>
               </header>
               <div class="images">
                 <figure>
@@ -268,15 +379,17 @@ function buildHtml(summary) {
         .join("\n");
 
       return `
-        <section class="case">
+        <section class="case" id="case-${entry.caseId}">
           <header class="case-header">
             <div>
               <h2>${escapeHtml(entry.caseId)}</h2>
               <p>Compared slides: ${entry.selectedSlides.join(", ")}</p>
             </div>
             <div class="stats">
-              <span>Max diff: ${entry.maxDiffRatio.toFixed(4)}</span>
-              <span>Mean diff: ${entry.meanDiffRatio.toFixed(4)}</span>
+              <span>Renderer max diff: ${entry.maxDiffRatio.toFixed(4)}</span>
+              <span>Renderer mean diff: ${entry.meanDiffRatio.toFixed(4)}</span>
+              <span>Office mean delta: ${entry.officeMeanDelta >= 0 ? "+" : ""}${entry.officeMeanDelta.toFixed(4)}</span>
+              <span>Office max delta: ${entry.officeMaxDelta >= 0 ? "+" : ""}${entry.officeMaxDelta.toFixed(4)}</span>
             </div>
           </header>
           ${slides}
@@ -306,6 +419,10 @@ function buildHtml(summary) {
       .stats { display: grid; gap: 6px; text-align: right; color: #42526b; }
       .slide-card { border-top: 1px solid #e3e8f0; padding-top: 20px; margin-top: 20px; }
       .images { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+      .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+      .nav-card { display: grid; gap: 4px; padding: 16px; border-radius: 16px; border: 1px solid #dbe3ef; background: #f7f9fc; color: inherit; text-decoration: none; }
+      .nav-card strong { font-size: 16px; }
+      .nav-card span { color: #42526b; font-size: 14px; }
       figure { margin: 0; background: #f7f9fc; border: 1px solid #dbe3ef; border-radius: 16px; padding: 12px; }
       img { display: block; width: 100%; height: auto; border-radius: 10px; background: white; }
       figcaption { margin-top: 10px; text-align: center; color: #42526b; font-size: 14px; }
@@ -317,6 +434,12 @@ function buildHtml(summary) {
       <section class="case">
         <h1>Visual PR Comparison</h1>
         <p>Current PR renderer output compared against the latest successful <code>main</code> renderer artifact.</p>
+      </section>
+      <section class="case">
+        <h2>Cases</h2>
+        <div class="nav-grid">
+          ${navCards}
+        </div>
       </section>
       ${cards}
     </main>

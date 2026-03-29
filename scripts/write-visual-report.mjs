@@ -14,10 +14,18 @@ try {
   }
 
   const sections = [];
+  const navCards = [];
 
   for (const caseId of caseDirs) {
     const metricsPath = path.join(baseDir, caseId, "metrics.json");
     const summary = JSON.parse(await readFile(metricsPath, "utf8"));
+    navCards.push(`
+      <a class="nav-card" href="#case-${caseId}">
+        <strong>${escapeHtml(summary.fixture)}</strong>
+        <span>Slides: ${summary.selectedSlides.join(", ")}</span>
+        <span>Max diff: ${Number(summary.maxObservedDiffRatio).toFixed(4)}</span>
+      </a>
+    `);
     const cards = summary.metrics
       .map((metric) => {
         const slideLabel = `slide-${String(metric.slide).padStart(2, "0")}`;
@@ -49,7 +57,7 @@ try {
       .join("\n");
 
     sections.push(`
-      <section class="case">
+      <section class="case" id="case-${caseId}">
         <header class="case-header">
           <div>
             <h2>${escapeHtml(summary.fixture)}</h2>
@@ -100,6 +108,32 @@ try {
         border-radius: 20px;
         padding: 24px;
         box-shadow: 0 24px 60px rgba(20, 32, 51, 0.08);
+      }
+
+      .nav-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+      }
+
+      .nav-card {
+        display: grid;
+        gap: 4px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid #dbe3ef;
+        background: #f7f9fc;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .nav-card strong {
+        font-size: 16px;
+      }
+
+      .nav-card span {
+        color: #42526b;
+        font-size: 14px;
       }
 
       .case-header {
@@ -191,6 +225,12 @@ try {
             <p>Reference images are rendered from PPTX with LibreOffice. Renderer images come from the current branch in Chromium.</p>
           </div>
         </header>
+      </section>
+      <section class="case">
+        <h2>Cases</h2>
+        <div class="nav-grid">
+          ${navCards.join("\n")}
+        </div>
       </section>
       ${sections.join("\n")}
     </main>
