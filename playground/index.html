@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pptx-react-renderer Playground</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="control-panel">
+        <div class="panel-copy">
+          <div class="eyebrow">Browser Playground</div>
+          <h1>Render a local <code>.pptx</code> directly in the browser.</h1>
+          <p>
+            Drop a PowerPoint file here and inspect how <code>pptx-react-renderer</code> reconstructs
+            slides as real HTML and CSS. Nothing leaves the page.
+          </p>
+        </div>
+
+        <section class="panel-card uploader-card">
+          <input id="file-input" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" hidden />
+          <button id="pick-file-button" class="primary-action" type="button">Choose a PPTX</button>
+          <label id="dropzone" class="dropzone" for="file-input">
+            <span class="dropzone-title">Drag and drop a deck</span>
+            <span class="dropzone-subtitle">Your presentation stays in this browser session.</span>
+          </label>
+          <p id="status-message" class="status-message">Waiting for a file.</p>
+        </section>
+
+        <section class="panel-card controls-card">
+          <div class="control-row">
+            <label for="scale-input">Scale</label>
+            <div class="range-row">
+              <input id="scale-input" type="range" min="0.35" max="1.25" step="0.05" value="0.65" />
+              <output id="scale-value" for="scale-input">65%</output>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <span>Theme</span>
+            <div class="segmented-control" role="group" aria-label="Playground theme">
+              <button id="theme-light" class="segment-button is-active" type="button" data-theme="light">Light</button>
+              <button id="theme-dark" class="segment-button" type="button" data-theme="dark">Dark</button>
+            </div>
+          </div>
+
+          <label class="toggle-row" for="slide-numbers-input">
+            <span>Slide labels</span>
+            <input id="slide-numbers-input" type="checkbox" checked />
+          </label>
+        </section>
+
+        <section class="panel-card metadata-card">
+          <div class="metadata-header">
+            <span class="eyebrow">Session</span>
+            <button id="clear-button" class="ghost-action" type="button">Clear</button>
+          </div>
+          <dl class="metadata-grid">
+            <div>
+              <dt>File</dt>
+              <dd id="file-name">None</dd>
+            </div>
+            <div>
+              <dt>Slides</dt>
+              <dd id="slide-count">0</dd>
+            </div>
+            <div>
+              <dt>Canvas</dt>
+              <dd id="slide-size">-</dd>
+            </div>
+            <div>
+              <dt>Renderer</dt>
+              <dd>Semantic HTML</dd>
+            </div>
+          </dl>
+        </section>
+      </aside>
+
+      <main class="stage">
+        <div class="stage-chrome">
+          <div>
+            <div class="eyebrow">Preview</div>
+            <h2>Rendered slide surface</h2>
+          </div>
+          <a class="repo-link" href="https://github.com/OpenRenderKit/pptx-react-renderer" target="_blank" rel="noreferrer">View repository</a>
+        </div>
+
+        <section class="preview-frame">
+          <div id="empty-state" class="empty-state">
+            <p class="empty-kicker">Ready when you are</p>
+            <p class="empty-title">Upload a presentation to see the DOM renderer in action.</p>
+            <p class="empty-body">
+              The preview will appear here with selectable text, preserved layout, and the same rendering options exposed by the library API.
+            </p>
+          </div>
+          <div id="preview" class="preview-surface" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./bundle.js"></script>
+  </body>
+</html>
