@@ -1,0 +1,29 @@
+{
+  "fixture": "nested-groups",
+  "selectedSlides": [
+    1
+  ],
+  "enforceThresholds": false,
+  "thresholds": {
+    "maxDiffRatio": 0.42,
+    "meanDiffRatio": 0.24
+  },
+  "maxObservedDiffRatio": 0.2561349826388889,
+  "meanObservedDiffRatio": 0.2561349826388889,
+  "metrics": [
+    {
+      "slide": 1,
+      "actualWidth": 1280,
+      "actualHeight": 720,
+      "referenceWidth": 1281,
+      "referenceHeight": 720,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "widthDrift": 1,
+      "heightDrift": 0,
+      "mismatchPixels": 236054,
+      "totalPixels": 921600,
+      "diffRatio": 0.2561349826388889
+    }
+  ]
+}
