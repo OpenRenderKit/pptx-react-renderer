@@ -6,52 +6,107 @@
     <title>pptx-react-renderer PR Previews</title>
     <style>
       :root {
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
         color-scheme: light;
-        background: #f4f7fb;
-        color: #162133;
+        background:
+          radial-gradient(circle at top left, rgba(27, 96, 255, 0.16), transparent 32%),
+          radial-gradient(circle at top right, rgba(0, 182, 155, 0.14), transparent 28%),
+          linear-gradient(180deg, #f3f7ff 0%, #f8fbff 100%);
+        color: #122038;
       }
       * { box-sizing: border-box; }
-      body { margin: 0; padding: 32px; }
-      main { max-width: 1100px; margin: 0 auto; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 24px; }
-      .card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 24px 60px rgba(20, 32, 51, 0.08); }
-      a { color: #0a5bd8; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      p { margin: 8px 0 0; }
+      body { margin: 0; min-height: 100vh; padding: 40px 24px 72px; }
+      main { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+      .hero {
+        padding: 28px 32px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(203, 214, 233, 0.7);
+        box-shadow: 0 28px 80px rgba(15, 32, 62, 0.10);
+        backdrop-filter: blur(18px);
+      }
+      h1 { margin: 0 0 12px; font-size: clamp(36px, 6vw, 64px); line-height: 0.98; letter-spacing: -0.05em; }
+      .hero p { max-width: 780px; margin: 0; color: #46556e; font-size: 18px; line-height: 1.5; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+      .card {
+        display: grid;
+        gap: 12px;
+        padding: 22px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(207, 217, 234, 0.9);
+        box-shadow: 0 24px 70px rgba(17, 32, 58, 0.08);
+      }
+      .eyebrow {
+        width: fit-content;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(24, 93, 216, 0.08);
+        color: #0f57c8;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .card h2 { margin: 0; font-size: 30px; letter-spacing: -0.03em; }
+      .card p { margin: 0; color: #46556e; line-height: 1.5; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 8px; }
+      .actions a {
+        text-decoration: none;
+        color: white;
+        background: linear-gradient(135deg, #1257da 0%, #0f7bdc 100%);
+        padding: 11px 14px;
+        border-radius: 14px;
+        font-weight: 600;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.24);
+      }
+      .actions a:last-child {
+        background: linear-gradient(135deg, #0b7a72 0%, #11948a 100%);
+      }
+      @media (max-width: 680px) {
+        body { padding: 24px 16px 48px; }
+        .hero { padding: 22px; }
+      }
     </style>
   </head>
   <body>
     <main>
-      <h1>pptx-react-renderer PR Visual Previews</h1>
-      <p>Published GitHub Pages previews for pull request visual-regression runs.</p>
+      <section class="hero">
+        <h1>Visual PR Previews</h1>
+        <p>GitHub Pages snapshots for <code>pptx-react-renderer</code> pull requests. Each preview publishes two reports: <code>PR vs main</code> to isolate renderer changes, and <code>Office vs PR</code> to measure fidelity against the office-rendered baseline.</p>
+      </section>
       <section class="grid">
         
       <article class="card">
-        <h2>PR #11</h2>
-        <p><a href="./pr-previews/11/visual-pr-comparison/index.html">PR vs main report</a></p>
-        <p><a href="./pr-previews/11/visual-regression/index.html">Office reference vs PR report</a></p>
+        <div class="eyebrow">Pull Request</div>
+        <h2>#8</h2>
+        <p>Published visual review surfaces for this PR.</p>
+        <div class="actions">
+          <a href="./pr-previews/8/visual-pr-comparison/index.html">PR vs main</a>
+          <a href="./pr-previews/8/visual-regression/index.html">Office vs PR</a>
+        </div>
       </article>
     
 
       <article class="card">
-        <h2>PR #8</h2>
-        <p><a href="./pr-previews/8/visual-pr-comparison/index.html">PR vs main report</a></p>
-        <p><a href="./pr-previews/8/visual-regression/index.html">Office reference vs PR report</a></p>
+        <div class="eyebrow">Pull Request</div>
+        <h2>#5</h2>
+        <p>Published visual review surfaces for this PR.</p>
+        <div class="actions">
+          <a href="./pr-previews/5/visual-pr-comparison/index.html">PR vs main</a>
+          <a href="./pr-previews/5/visual-regression/index.html">Office vs PR</a>
+        </div>
       </article>
     
 
       <article class="card">
-        <h2>PR #5</h2>
-        <p><a href="./pr-previews/5/visual-pr-comparison/index.html">PR vs main report</a></p>
-        <p><a href="./pr-previews/5/visual-regression/index.html">Office reference vs PR report</a></p>
-      </article>
-    
-
-      <article class="card">
-        <h2>PR #4</h2>
-        <p><a href="./pr-previews/4/visual-pr-comparison/index.html">PR vs main report</a></p>
-        <p><a href="./pr-previews/4/visual-regression/index.html">Office reference vs PR report</a></p>
+        <div class="eyebrow">Pull Request</div>
+        <h2>#4</h2>
+        <p>Published visual review surfaces for this PR.</p>
+        <div class="actions">
+          <a href="./pr-previews/4/visual-pr-comparison/index.html">PR vs main</a>
+          <a href="./pr-previews/4/visual-regression/index.html">Office vs PR</a>
+        </div>
       </article>
     
       </section>
