@@ -1,0 +1,59 @@
+{
+  "caseId": "unsupported-chart",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.006471354166666667,
+      "mismatchPixels": 5964,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.012752821180555556,
+      "currentOfficeDiffRatio": 0.011860894097222222,
+      "officeDeltaDiffRatio": -0.000891927083333334
+    }
+  ],
+  "maxDiffRatio": 0.006471354166666667,
+  "meanDiffRatio": 0.006471354166666667,
+  "topSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.006471354166666667,
+      "mismatchPixels": 5964,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.012752821180555556,
+      "currentOfficeDiffRatio": 0.011860894097222222,
+      "officeDeltaDiffRatio": -0.000891927083333334
+    }
+  ],
+  "officeMeanDelta": -0.000891927083333334,
+  "officeMaxDelta": -0.000891927083333334,
+  "topRegressedSlides": [],
+  "topImprovedSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.006471354166666667,
+      "mismatchPixels": 5964,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.012752821180555556,
+      "currentOfficeDiffRatio": 0.011860894097222222,
+      "officeDeltaDiffRatio": -0.000891927083333334
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.012752821180555556,
+    "meanObservedDiffRatio": 0.012752821180555556
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.011860894097222222,
+    "meanObservedDiffRatio": 0.011860894097222222
+  }
+}
