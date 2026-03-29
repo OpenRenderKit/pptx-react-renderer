@@ -1,0 +1,59 @@
+{
+  "caseId": "theme-colors",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.1125,
+      "mismatchPixels": 103680,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.08507703993055556,
+      "currentOfficeDiffRatio": 0.12257703993055556,
+      "officeDeltaDiffRatio": 0.037500000000000006
+    }
+  ],
+  "maxDiffRatio": 0.1125,
+  "meanDiffRatio": 0.1125,
+  "topSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.1125,
+      "mismatchPixels": 103680,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.08507703993055556,
+      "currentOfficeDiffRatio": 0.12257703993055556,
+      "officeDeltaDiffRatio": 0.037500000000000006
+    }
+  ],
+  "officeMeanDelta": 0.037500000000000006,
+  "officeMaxDelta": 0.037500000000000006,
+  "topRegressedSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.1125,
+      "mismatchPixels": 103680,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.08507703993055556,
+      "currentOfficeDiffRatio": 0.12257703993055556,
+      "officeDeltaDiffRatio": 0.037500000000000006
+    }
+  ],
+  "topImprovedSlides": [],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.08507703993055556,
+    "meanObservedDiffRatio": 0.08507703993055556
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.12257703993055556,
+    "meanObservedDiffRatio": 0.12257703993055556
+  }
+}
