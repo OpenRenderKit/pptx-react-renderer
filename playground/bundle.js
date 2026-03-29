@@ -2605,6 +2605,13 @@ async function parseSlide(xml, slideNumber, dimensions, relationships, imageMap,
     background
   };
 }
+var DEFAULT_TEXT_INSET_EMU = {
+  left: 91440,
+  right: 91440,
+  top: 45720,
+  bottom: 45720
+};
+var EMPTY_TEXT_SHAPE_FALLBACK_MIN_AREA_PX = 65e4;
 async function parseSpTreeChildren(container, zIndex, context, transform) {
   const elements = [];
   for (const child of Array.from(container.children)) {
@@ -2654,14 +2661,40 @@ function parseShape(sp, zIndex, themeColors, transform) {
   const position = parsePosition(xfrm, transform);
   const txBody = sp.querySelector("txBody");
   if (txBody) {
-    return parseTextElement(txBody, position, zIndex, themeColors);
+    if (hasRenderableTextContent(txBody)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
+    if (isPlaceholderShape(sp)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
+    if (!hasExplicitShapeVisualStyle(sp)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
+    if (!isLargeVisualShape(position)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
   }
   const tbl = sp.querySelector("tbl");
   if (tbl) {
     return parseTable(tbl, position, zIndex, themeColors);
   }
-  const prstGeom = sp.querySelector("prstGeom");
-  const shapeType = prstGeom?.getAttribute("prst") || "rect";
+  const prstGeom = sp.querySelector(":scope > spPr > prstGeom");
+  const custGeom = sp.querySelector(":scope > spPr > custGeom");
+  const shapeType = prstGeom?.getAttribute("prst") || (custGeom ? "custom" : "rect");
+  let pathData;
+  let viewBox;
+  if (custGeom) {
+    const pathLst = custGeom.querySelector(":scope > pathLst");
+    if (pathLst) {
+      pathData = parsePathList(pathLst, themeColors);
+      const firstPath = pathLst.querySelector(":scope > path");
+      const viewWidth = firstPath ? parseFloat(firstPath.getAttribute("w") || "0") : 0;
+      const viewHeight = firstPath ? parseFloat(firstPath.getAttribute("h") || "0") : 0;
+      if (viewWidth > 0 && viewHeight > 0) {
+        viewBox = { x: 0, y: 0, width: viewWidth, height: viewHeight };
+      }
+    }
+  }
   const shapeElement = {
     type: "shape",
     ...position,
@@ -2669,9 +2702,39 @@ function parseShape(sp, zIndex, themeColors, transform) {
     shapeType,
     fillColor: parseFillColor(sp, themeColors),
     strokeColor: parseStrokeColor(sp, themeColors),
-    strokeWidth: parseStrokeWidth(sp)
+    strokeWidth: parseStrokeWidth(sp),
+    pathData,
+    viewBox
   };
   return shapeElement;
+}
+function hasRenderableTextContent(txBody) {
+  for (const node of Array.from(txBody.querySelectorAll("t"))) {
+    const text = node.textContent || "";
+    if (text.trim().length > 0) return true;
+  }
+  if (txBody.querySelector("fld") || txBody.querySelector("br")) {
+    return true;
+  }
+  return false;
+}
+function hasExplicitShapeVisualStyle(sp) {
+  const spPr = sp.querySelector(":scope > spPr");
+  if (!spPr) return false;
+  if (spPr.querySelector(":scope > solidFill, :scope > gradFill, :scope > pattFill, :scope > blipFill")) {
+    return true;
+  }
+  const ln = spPr.querySelector(":scope > ln");
+  if (ln?.querySelector(":scope > solidFill, :scope > gradFill, :scope > noFill")) {
+    return true;
+  }
+  return false;
+}
+function isPlaceholderShape(sp) {
+  return sp.querySelector(":scope > nvSpPr > nvPr > ph") !== null;
+}
+function isLargeVisualShape(position) {
+  return position.width * position.height >= EMPTY_TEXT_SHAPE_FALLBACK_MIN_AREA_PX;
 }
 function parseTextElement(txBody, position, zIndex, themeColors) {
   const defaultFontSize = parseFontSize(txBody);
@@ -2695,6 +2758,10 @@ function parseTextElement(txBody, position, zIndex, themeColors) {
   const tIns = bodyPr?.getAttribute("tIns");
   const rIns = bodyPr?.getAttribute("rIns");
   const bIns = bodyPr?.getAttribute("bIns");
+  const leftInsetEmu = parseOptionalInt(lIns) ?? DEFAULT_TEXT_INSET_EMU.left;
+  const topInsetEmu = parseOptionalInt(tIns) ?? DEFAULT_TEXT_INSET_EMU.top;
+  const rightInsetEmu = parseOptionalInt(rIns) ?? DEFAULT_TEXT_INSET_EMU.right;
+  const bottomInsetEmu = parseOptionalInt(bIns) ?? DEFAULT_TEXT_INSET_EMU.bottom;
   return {
     type: "text",
     ...position,
@@ -2713,10 +2780,10 @@ function parseTextElement(txBody, position, zIndex, themeColors) {
     wrap: wrap !== "none",
     vertOverflow: vertOverflow || "overflow",
     horzOverflow: horzOverflow || "overflow",
-    leftInset: lIns ? parseInt(lIns, 10) / 12700 : void 0,
-    topInset: tIns ? parseInt(tIns, 10) / 12700 : void 0,
-    rightInset: rIns ? parseInt(rIns, 10) / 12700 : void 0,
-    bottomInset: bIns ? parseInt(bIns, 10) / 12700 : void 0
+    leftInset: leftInsetEmu / 12700,
+    topInset: topInsetEmu / 12700,
+    rightInset: rightInsetEmu / 12700,
+    bottomInset: bottomInsetEmu / 12700
   };
 }
 function parseParagraph(p, themeColors) {
@@ -3307,14 +3374,14 @@ function parseTextColor(txBody, themeColors) {
 function parseFillColor(sp, themeColors) {
   const solidFill = sp.querySelector("spPr > solidFill");
   if (!solidFill) return void 0;
-  return parseColorValue(solidFill, themeColors);
+  return parseColorValue(solidFill, themeColors, { includeAlpha: true });
 }
 function parseStrokeColor(sp, themeColors) {
   const ln = sp.querySelector("spPr > ln");
   if (!ln) return void 0;
   const solidFill = ln.querySelector("solidFill");
   if (!solidFill) return void 0;
-  return parseColorValue(solidFill, themeColors);
+  return parseColorValue(solidFill, themeColors, { includeAlpha: true });
 }
 function parseStrokeWidth(sp) {
   const ln = sp.querySelector("spPr > ln");
@@ -3417,38 +3484,49 @@ async function loadDiagramColors(zip, colorsPath, themeColors) {
   }
   return diagramColors;
 }
-function parseColorValue(element, themeColors) {
+function parseColorValue(element, themeColors, options) {
+  const includeAlpha = options?.includeAlpha === true;
   const srgbClr = element.querySelector("srgbClr");
   if (srgbClr) {
     const val = srgbClr.getAttribute("val");
-    if (val) return applyColorTransforms(`#${val}`, srgbClr);
+    if (val) return applyColorTransforms(`#${val}`, srgbClr, includeAlpha);
   }
   const schemeClr = element.querySelector("schemeClr");
   if (schemeClr) {
     const val = schemeClr.getAttribute("val");
     if (val) {
       const resolved = themeColors.get(val) || val;
-      return applyColorTransforms(resolved.startsWith("#") ? resolved : `#${resolved}`, schemeClr);
+      return applyColorTransforms(
+        resolved.startsWith("#") ? resolved : `#${resolved}`,
+        schemeClr,
+        includeAlpha
+      );
     }
   }
   const tagName = element.tagName.toLowerCase();
   if (tagName === "srgbclr" || tagName.endsWith(":srgbClr")) {
     const val = element.getAttribute("val");
-    if (val) return applyColorTransforms(`#${val}`, element);
+    if (val) return applyColorTransforms(`#${val}`, element, includeAlpha);
   }
   if (tagName === "schemeclr" || tagName.endsWith(":schemeClr")) {
     const val = element.getAttribute("val");
     if (val) {
       const resolved = themeColors.get(val) || val;
-      return applyColorTransforms(resolved.startsWith("#") ? resolved : `#${resolved}`, element);
+      return applyColorTransforms(
+        resolved.startsWith("#") ? resolved : `#${resolved}`,
+        element,
+        includeAlpha
+      );
     }
   }
   return void 0;
 }
-function applyColorTransforms(baseColor, colorElement) {
+function applyColorTransforms(baseColor, colorElement, includeAlpha = false) {
   const rgb = hexToRgb(baseColor);
   if (!rgb) return baseColor;
-  let [r, g, b] = rgb;
+  const hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+  if (!hsl) return baseColor;
+  let [h, s, l] = hsl;
   const lumMod = parseOptionalInt(colorElement.querySelector(":scope > lumMod")?.getAttribute("val"));
   const lumOff = parseOptionalInt(colorElement.querySelector(":scope > lumOff")?.getAttribute("val"));
   const tint = parseOptionalInt(colorElement.querySelector(":scope > tint")?.getAttribute("val"));
@@ -3456,23 +3534,40 @@ function applyColorTransforms(baseColor, colorElement) {
   if (lumMod !== void 0 || lumOff !== void 0) {
     const mod = (lumMod ?? 1e5) / 1e5;
     const off = (lumOff ?? 0) / 1e5;
-    r = clampColor(Math.round(r * mod + 255 * off));
-    g = clampColor(Math.round(g * mod + 255 * off));
-    b = clampColor(Math.round(b * mod + 255 * off));
+    l = clampUnit(l * mod + off);
   }
   if (tint !== void 0) {
     const factor = tint / 1e5;
-    r = clampColor(Math.round(r + (255 - r) * factor));
-    g = clampColor(Math.round(g + (255 - g) * factor));
-    b = clampColor(Math.round(b + (255 - b) * factor));
+    l = clampUnit(l + (1 - l) * factor);
   }
   if (shade !== void 0) {
     const factor = shade / 1e5;
-    r = clampColor(Math.round(r * factor));
-    g = clampColor(Math.round(g * factor));
-    b = clampColor(Math.round(b * factor));
+    l = clampUnit(l * factor);
+  }
+  const [r, g, b] = hslToRgb(h, s, l);
+  if (includeAlpha) {
+    const alpha = parseAlphaTransform(colorElement);
+    if (alpha < 1) {
+      return `rgba(${r}, ${g}, ${b}, ${formatAlpha(alpha)})`;
+    }
   }
   return rgbToHex(r, g, b);
+}
+function parseAlphaTransform(colorElement) {
+  const alpha = parseOptionalInt(colorElement.querySelector(":scope > alpha")?.getAttribute("val"));
+  const alphaMod = parseOptionalInt(
+    colorElement.querySelector(":scope > alphaMod")?.getAttribute("val")
+  );
+  const alphaOff = parseOptionalInt(
+    colorElement.querySelector(":scope > alphaOff")?.getAttribute("val")
+  );
+  const base = (alpha ?? 1e5) / 1e5;
+  const mod = (alphaMod ?? 1e5) / 1e5;
+  const off = (alphaOff ?? 0) / 1e5;
+  return clampUnit(base * mod + off);
+}
+function formatAlpha(alpha) {
+  return (Math.round(alpha * 1e3) / 1e3).toString();
 }
 function hexToRgb(color) {
   const hex = color.replace("#", "");
@@ -3485,6 +3580,56 @@ function hexToRgb(color) {
 }
 function rgbToHex(r, g, b) {
   return `#${[r, g, b].map((channel) => clampColor(channel).toString(16).padStart(2, "0")).join("")}`;
+}
+function rgbToHsl(r, g, b) {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+  if (delta !== 0) {
+    s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+    if (max === rn) {
+      h = (gn - bn) / delta + (gn < bn ? 6 : 0);
+    } else if (max === gn) {
+      h = (bn - rn) / delta + 2;
+    } else {
+      h = (rn - gn) / delta + 4;
+    }
+    h /= 6;
+  }
+  if (!Number.isFinite(h) || !Number.isFinite(s) || !Number.isFinite(l)) {
+    return void 0;
+  }
+  return [h, s, l];
+}
+function hueToRgb(p, q, t) {
+  let adjusted = t;
+  if (adjusted < 0) adjusted += 1;
+  if (adjusted > 1) adjusted -= 1;
+  if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
+  if (adjusted < 1 / 2) return q;
+  if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
+  return p;
+}
+function hslToRgb(h, s, l) {
+  if (s === 0) {
+    const gray = Math.round(l * 255);
+    return [gray, gray, gray];
+  }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const r = hueToRgb(p, q, h + 1 / 3);
+  const g = hueToRgb(p, q, h);
+  const b = hueToRgb(p, q, h - 1 / 3);
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+function clampUnit(value) {
+  return Math.max(0, Math.min(1, value));
 }
 function clampColor(value) {
   return Math.max(0, Math.min(255, value));
@@ -3649,54 +3794,64 @@ function parsePathList(pathLst, colors) {
   const paths = [];
   pathLst.querySelectorAll("path").forEach((pathEl) => {
     const commands = [];
-    const moveTo = pathEl.querySelector("moveTo");
-    if (moveTo) {
-      const pt = moveTo.querySelector("pt");
-      if (pt) {
-        const x = parseFloat(pt.getAttribute("x") || "0");
-        const y = parseFloat(pt.getAttribute("y") || "0");
-        commands.push({ type: "M", x, y });
+    for (const child of Array.from(pathEl.children)) {
+      switch (child.localName) {
+        case "moveTo": {
+          const pt = child.querySelector(":scope > pt");
+          if (!pt) break;
+          commands.push({
+            type: "M",
+            x: parseFloat(pt.getAttribute("x") || "0"),
+            y: parseFloat(pt.getAttribute("y") || "0")
+          });
+          break;
+        }
+        case "lnTo": {
+          const pt = child.querySelector(":scope > pt");
+          if (!pt) break;
+          commands.push({
+            type: "L",
+            x: parseFloat(pt.getAttribute("x") || "0"),
+            y: parseFloat(pt.getAttribute("y") || "0")
+          });
+          break;
+        }
+        case "cubicBezTo": {
+          const pts = Array.from(child.querySelectorAll(":scope > pt"));
+          if (pts.length < 3) break;
+          commands.push({
+            type: "C",
+            cp1x: parseFloat(pts[0].getAttribute("x") || "0"),
+            cp1y: parseFloat(pts[0].getAttribute("y") || "0"),
+            cp2x: parseFloat(pts[1].getAttribute("x") || "0"),
+            cp2y: parseFloat(pts[1].getAttribute("y") || "0"),
+            x: parseFloat(pts[2].getAttribute("x") || "0"),
+            y: parseFloat(pts[2].getAttribute("y") || "0")
+          });
+          break;
+        }
+        case "quadBezTo": {
+          const pts = Array.from(child.querySelectorAll(":scope > pt"));
+          if (pts.length < 2) break;
+          commands.push({
+            type: "Q",
+            cpx: parseFloat(pts[0].getAttribute("x") || "0"),
+            cpy: parseFloat(pts[0].getAttribute("y") || "0"),
+            x: parseFloat(pts[1].getAttribute("x") || "0"),
+            y: parseFloat(pts[1].getAttribute("y") || "0")
+          });
+          break;
+        }
+        case "arcTo": {
+          break;
+        }
+        case "close": {
+          commands.push({ type: "Z" });
+          break;
+        }
+        default:
+          break;
       }
-    }
-    pathEl.querySelectorAll("lnTo").forEach((lnTo) => {
-      const pt = lnTo.querySelector("pt");
-      if (pt) {
-        const x = parseFloat(pt.getAttribute("x") || "0");
-        const y = parseFloat(pt.getAttribute("y") || "0");
-        commands.push({ type: "L", x, y });
-      }
-    });
-    pathEl.querySelectorAll("cubicBezTo").forEach((cubic) => {
-      const pts = cubic.querySelectorAll("pt");
-      if (pts.length >= 3) {
-        commands.push({
-          type: "C",
-          cp1x: parseFloat(pts[0].getAttribute("x") || "0"),
-          cp1y: parseFloat(pts[0].getAttribute("y") || "0"),
-          cp2x: parseFloat(pts[1].getAttribute("x") || "0"),
-          cp2y: parseFloat(pts[1].getAttribute("y") || "0"),
-          x: parseFloat(pts[2].getAttribute("x") || "0"),
-          y: parseFloat(pts[2].getAttribute("y") || "0")
-        });
-      }
-    });
-    pathEl.querySelectorAll("quadBezTo").forEach((quad) => {
-      const pts = quad.querySelectorAll("pt");
-      if (pts.length >= 2) {
-        commands.push({
-          type: "Q",
-          cpx: parseFloat(pts[0].getAttribute("x") || "0"),
-          cpy: parseFloat(pts[0].getAttribute("y") || "0"),
-          x: parseFloat(pts[1].getAttribute("x") || "0"),
-          y: parseFloat(pts[1].getAttribute("y") || "0")
-        });
-      }
-    });
-    pathEl.querySelectorAll("arcTo").forEach((_arc) => {
-    });
-    const close = pathEl.querySelector("close");
-    if (close) {
-      commands.push({ type: "Z" });
     }
     const fillColor = pathEl.getAttribute("fill") !== "none" ? parseColorValue(pathEl, colors) : void 0;
     paths.push({
