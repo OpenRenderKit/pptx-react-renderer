@@ -22,5 +22,6 @@ test("renders the committed PPTX fixture in a real browser", async ({ page }) =>
     "Evaluation Matrix",
   ]);
   await expect(page.locator(".pptx-image-element img")).toHaveCount(16);
-  await expect(page.locator(".pptx-graphic-frame")).toHaveCount(6);
+  await expect(page.locator(".pptx-graphic-frame")).toHaveCount(3);
+  await expect(page.locator(".pptx-table-element")).toHaveCount(3);
 });

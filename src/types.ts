@@ -182,6 +182,8 @@ export type PathCommand =
 export interface TableElement extends BaseElement {
   type: "table";
   rows: TableRow[];
+  columnWidths?: number[];
+  backgroundColor?: string;
 }
 
 export interface TableRow {
@@ -189,12 +191,37 @@ export interface TableRow {
   height?: number;
 }
 
+export interface TableBorder {
+  color?: string;
+  width?: number;
+  style?: string;
+}
+
+export interface TableCellPadding {
+  left?: number;
+  right?: number;
+  top?: number;
+  bottom?: number;
+}
+
 export interface TableCell {
   content: string;
+  paragraphs?: Paragraph[];
+  defaultFontSize?: number;
+  defaultFontFamily?: string;
+  defaultColor?: string;
+  align?: "left" | "center" | "right" | "justify";
+  verticalAlign?: "top" | "middle" | "bottom";
+  padding?: TableCellPadding;
   rowSpan?: number;
   colSpan?: number;
   backgroundColor?: string;
-  borderColor?: string;
+  borders?: {
+    left?: TableBorder;
+    right?: TableBorder;
+    top?: TableBorder;
+    bottom?: TableBorder;
+  };
 }
 
 export interface GroupElement extends BaseElement {
