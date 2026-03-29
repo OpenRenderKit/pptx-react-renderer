@@ -70,6 +70,10 @@ export function PptxPreview({ file }: { file: ArrayBuffer | null }) {
 }
 ```
 
+## Playground
+
+This repo also includes a static browser playground under [`playground/`](./playground) for drag-and-drop local `.pptx` rendering. It is designed for GitHub Pages publishing from the `gh-pages` branch and does not upload presentations to a server.
+
 ## API
 
 ### `renderPptx(input, options)`
