@@ -1,0 +1,57 @@
+name: pages-playground
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish-pages-playground:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v6
+        with:
+          ref: gh-pages
+          path: .tmp/pages-site
+
+      - name: Build playground site
+        run: |
+          mkdir -p .tmp/pages-site
+          pnpm run pages:build-playground -- .tmp/pages-site
+          touch .tmp/pages-site/.nojekyll
+          node scripts/write-pages-index.mjs .tmp/pages-site
+
+      - name: Commit playground site
+        run: |
+          cd .tmp/pages-site
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if git status --short | grep . >/dev/null; then
+            git add .
+            git commit -m "Update playground site"
+            git push origin gh-pages
+          fi
