@@ -132,6 +132,106 @@ describe("pptx-react-renderer", () => {
     ]);
   });
 
+  it("applies OOXML default text insets when bodyPr omits inset attributes", async () => {
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="457200" y="457200"/>
+            <a:ext cx="3657600" cy="1371600"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="t"/>
+          <a:lstStyle/>
+          <a:p><a:r><a:t>Default inset text</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    const textElement = slides[0].elements[0];
+
+    if (textElement.type !== "text") {
+      throw new Error("Expected a parsed text element");
+    }
+
+    expect(textElement.leftInset).toBeCloseTo(7.2, 4);
+    expect(textElement.rightInset).toBeCloseTo(7.2, 4);
+    expect(textElement.topInset).toBeCloseTo(3.6, 4);
+    expect(textElement.bottomInset).toBeCloseTo(3.6, 4);
+  });
+
+  it("parses empty txBody shape placeholders as visual shapes", async () => {
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="9144000" cy="6858000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:schemeClr val="tx1"/></a:solidFill>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="ctr"/>
+          <a:lstStyle/>
+          <a:p><a:pPr algn="ctr"/></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    expect(slides[0].elements[0]).toMatchObject({
+      type: "shape",
+      shapeType: "rect",
+      fillColor: "#000000",
+    });
+  });
+
+  it("keeps empty txBody placeholders as text when no explicit visual style exists", async () => {
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="ctr"/>
+          <a:lstStyle/>
+          <a:p><a:pPr algn="ctr"/></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    expect(slides[0].elements[0]).toMatchObject({ type: "text" });
+  });
+
   it("falls back to a placeholder for unresolved images", async () => {
     const buffer = await createTestPptx([
       {
@@ -387,6 +487,122 @@ describe("pptx-react-renderer", () => {
     expect(container.querySelector(".pptx-group-element .pptx-text-element")).not.toBeNull();
   });
 
+  it("applies scheme color luminance transforms using HSL lightness", async () => {
+    const baseAccent = "#4472c4";
+    const expectedLumMod = applyExpectedLightnessTransform(baseAccent, { lumMod: 70000 });
+    const expectedLumOff = applyExpectedLightnessTransform(baseAccent, { lumOff: 20000 });
+    const expectedTint = applyExpectedLightnessTransform(baseAccent, { tint: 25000 });
+    const expectedShade = applyExpectedLightnessTransform(baseAccent, { shade: 60000 });
+
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="457200" y="457200"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:schemeClr val="accent1"><a:lumMod val="70000"/></a:schemeClr></a:solidFill>
+        </p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="1600200" y="457200"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:schemeClr val="accent1"><a:lumOff val="20000"/></a:schemeClr></a:solidFill>
+        </p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="2743200" y="457200"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:schemeClr val="accent1"><a:tint val="25000"/></a:schemeClr></a:solidFill>
+        </p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="3886200" y="457200"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:schemeClr val="accent1"><a:shade val="60000"/></a:schemeClr></a:solidFill>
+        </p:spPr>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    const shapes = slides[0].elements.filter((element) => element.type === "shape");
+
+    expect(shapes).toHaveLength(4);
+    expect(shapes[0]).toMatchObject({ fillColor: expectedLumMod });
+    expect(shapes[1]).toMatchObject({ fillColor: expectedLumOff });
+    expect(shapes[2]).toMatchObject({ fillColor: expectedTint });
+    expect(shapes[3]).toMatchObject({ fillColor: expectedShade });
+  });
+
+  it("parses custom geometry shapes with path data and alpha-aware fills", async () => {
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="914400" y="914400"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+          <a:custGeom>
+            <a:avLst/>
+            <a:pathLst>
+              <a:path w="1000" h="500">
+                <a:moveTo><a:pt x="0" y="0"/></a:moveTo>
+                <a:lnTo><a:pt x="1000" y="0"/></a:lnTo>
+                <a:lnTo><a:pt x="1000" y="500"/></a:lnTo>
+                <a:lnTo><a:pt x="0" y="500"/></a:lnTo>
+                <a:close/>
+              </a:path>
+            </a:pathLst>
+          </a:custGeom>
+          <a:solidFill><a:schemeClr val="accent1"><a:alpha val="30000"/></a:schemeClr></a:solidFill>
+          <a:ln w="12700"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln>
+        </p:spPr>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    const customShape = slides[0].elements[0];
+
+    expect(customShape).toMatchObject({
+      type: "shape",
+      shapeType: "custom",
+      fillColor: "rgba(68, 114, 196, 0.3)",
+      strokeColor: "#ffffff",
+      strokeWidth: 1,
+      viewBox: { x: 0, y: 0, width: 1000, height: 500 },
+    });
+
+    if (customShape.type !== "shape") {
+      throw new Error("Expected a parsed shape element");
+    }
+
+    expect(customShape.pathData).toHaveLength(1);
+    expect(customShape.pathData?.[0].commands).toEqual([
+      { type: "M", x: 0, y: 0 },
+      { type: "L", x: 1000, y: 0 },
+      { type: "L", x: 1000, y: 500 },
+      { type: "L", x: 0, y: 500 },
+      { type: "Z" },
+    ]);
+
+  });
+
   it("throws a clear error when browser parsing APIs are unavailable", async () => {
     const buffer = await createTestPptx([{ text: ["Guard"] }]);
     const originalDomParser = globalThis.DOMParser;
@@ -443,3 +659,127 @@ describe("pptx-react-renderer", () => {
     }
   });
 });
+
+function applyExpectedLightnessTransform(
+  baseColor: string,
+  transform: {
+    lumMod?: number;
+    lumOff?: number;
+    tint?: number;
+    shade?: number;
+  },
+): string {
+  const rgb = hexToRgb(baseColor);
+  if (!rgb) {
+    throw new Error(`Invalid expected base color: ${baseColor}`);
+  }
+
+  const hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+  if (!hsl) {
+    throw new Error(`Failed to convert expected color to HSL: ${baseColor}`);
+  }
+
+  const [h, s, initialL] = hsl;
+  let l = initialL;
+
+  if (transform.lumMod !== undefined || transform.lumOff !== undefined) {
+    const mod = (transform.lumMod ?? 100000) / 100000;
+    const off = (transform.lumOff ?? 0) / 100000;
+    l = clampUnit(l * mod + off);
+  }
+
+  if (transform.tint !== undefined) {
+    const tintFactor = transform.tint / 100000;
+    l = clampUnit(l + (1 - l) * tintFactor);
+  }
+
+  if (transform.shade !== undefined) {
+    const shadeFactor = transform.shade / 100000;
+    l = clampUnit(l * shadeFactor);
+  }
+
+  const [r, g, b] = hslToRgb(h, s, l);
+  return rgbToHex(r, g, b);
+}
+
+function hexToRgb(color: string): [number, number, number] | undefined {
+  const hex = color.replace("#", "");
+  if (hex.length !== 6) return undefined;
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16),
+  ];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b]
+    .map((channel) => clampChannel(channel).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] | undefined {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+  const l = (max + min) / 2;
+
+  let h = 0;
+  let s = 0;
+
+  if (delta !== 0) {
+    s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+
+    if (max === rn) {
+      h = (gn - bn) / delta + (gn < bn ? 6 : 0);
+    } else if (max === gn) {
+      h = (bn - rn) / delta + 2;
+    } else {
+      h = (rn - gn) / delta + 4;
+    }
+
+    h /= 6;
+  }
+
+  if (!Number.isFinite(h) || !Number.isFinite(s) || !Number.isFinite(l)) {
+    return undefined;
+  }
+
+  return [h, s, l];
+}
+
+function hueToRgb(p: number, q: number, t: number): number {
+  let adjusted = t;
+  if (adjusted < 0) adjusted += 1;
+  if (adjusted > 1) adjusted -= 1;
+  if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
+  if (adjusted < 1 / 2) return q;
+  if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
+  return p;
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  if (s === 0) {
+    const gray = Math.round(l * 255);
+    return [gray, gray, gray];
+  }
+
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const r = hueToRgb(p, q, h + 1 / 3);
+  const g = hueToRgb(p, q, h);
+  const b = hueToRgb(p, q, h - 1 / 3);
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function clampUnit(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function clampChannel(value: number): number {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}

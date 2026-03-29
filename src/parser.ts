@@ -335,6 +335,15 @@ type ElementTransform = {
   scaleY: number;
 };
 
+const DEFAULT_TEXT_INSET_EMU = {
+  left: 91440,
+  right: 91440,
+  top: 45720,
+  bottom: 45720,
+};
+
+const EMPTY_TEXT_SHAPE_FALLBACK_MIN_AREA_PX = 650000;
+
 type ElementContext = {
   relationships: Map<string, string>;
   imageMap: Map<string, { src: string; mimeType: string }>;
@@ -410,7 +419,21 @@ function parseShape(
   // Check if it's a text element
   const txBody = sp.querySelector("txBody");
   if (txBody) {
-    return parseTextElement(txBody, position, zIndex, themeColors);
+    if (hasRenderableTextContent(txBody)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
+
+    if (isPlaceholderShape(sp)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
+
+    if (!hasExplicitShapeVisualStyle(sp)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
+
+    if (!isLargeVisualShape(position)) {
+      return parseTextElement(txBody, position, zIndex, themeColors);
+    }
   }
 
   // Check if it's a table
@@ -420,8 +443,27 @@ function parseShape(
   }
 
   // Otherwise it's a shape
-  const prstGeom = sp.querySelector("prstGeom");
-  const shapeType = prstGeom?.getAttribute("prst") || "rect";
+  const prstGeom = sp.querySelector(":scope > spPr > prstGeom");
+  const custGeom = sp.querySelector(":scope > spPr > custGeom");
+  const shapeType = prstGeom?.getAttribute("prst") || (custGeom ? "custom" : "rect");
+
+  let pathData: import("./types").ShapePath[] | undefined;
+  let viewBox: { x: number; y: number; width: number; height: number } | undefined;
+
+  if (custGeom) {
+    const pathLst = custGeom.querySelector(":scope > pathLst");
+    if (pathLst) {
+      pathData = parsePathList(pathLst, themeColors);
+
+      const firstPath = pathLst.querySelector(":scope > path");
+      const viewWidth = firstPath ? parseFloat(firstPath.getAttribute("w") || "0") : 0;
+      const viewHeight = firstPath ? parseFloat(firstPath.getAttribute("h") || "0") : 0;
+
+      if (viewWidth > 0 && viewHeight > 0) {
+        viewBox = { x: 0, y: 0, width: viewWidth, height: viewHeight };
+      }
+    }
+  }
 
   const shapeElement: ShapeElement = {
     type: "shape",
@@ -431,9 +473,53 @@ function parseShape(
     fillColor: parseFillColor(sp, themeColors),
     strokeColor: parseStrokeColor(sp, themeColors),
     strokeWidth: parseStrokeWidth(sp),
+    pathData,
+    viewBox,
   };
 
   return shapeElement;
+}
+
+function hasRenderableTextContent(txBody: Element): boolean {
+  for (const node of Array.from(txBody.querySelectorAll("t"))) {
+    const text = node.textContent || "";
+    if (text.trim().length > 0) return true;
+  }
+
+  if (txBody.querySelector("fld") || txBody.querySelector("br")) {
+    return true;
+  }
+
+  return false;
+}
+
+function hasExplicitShapeVisualStyle(sp: Element): boolean {
+  const spPr = sp.querySelector(":scope > spPr");
+  if (!spPr) return false;
+
+  if (spPr.querySelector(":scope > solidFill, :scope > gradFill, :scope > pattFill, :scope > blipFill")) {
+    return true;
+  }
+
+  const ln = spPr.querySelector(":scope > ln");
+  if (ln?.querySelector(":scope > solidFill, :scope > gradFill, :scope > noFill")) {
+    return true;
+  }
+
+  return false;
+}
+
+function isPlaceholderShape(sp: Element): boolean {
+  return sp.querySelector(":scope > nvSpPr > nvPr > ph") !== null;
+}
+
+function isLargeVisualShape(position: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}): boolean {
+  return position.width * position.height >= EMPTY_TEXT_SHAPE_FALLBACK_MIN_AREA_PX;
 }
 
 /**
@@ -485,6 +571,11 @@ function parseTextElement(
   const rIns = bodyPr?.getAttribute("rIns");
   const bIns = bodyPr?.getAttribute("bIns");
 
+  const leftInsetEmu = parseOptionalInt(lIns) ?? DEFAULT_TEXT_INSET_EMU.left;
+  const topInsetEmu = parseOptionalInt(tIns) ?? DEFAULT_TEXT_INSET_EMU.top;
+  const rightInsetEmu = parseOptionalInt(rIns) ?? DEFAULT_TEXT_INSET_EMU.right;
+  const bottomInsetEmu = parseOptionalInt(bIns) ?? DEFAULT_TEXT_INSET_EMU.bottom;
+
   return {
     type: "text",
     ...position,
@@ -503,10 +594,10 @@ function parseTextElement(
     wrap: wrap !== "none",
     vertOverflow: vertOverflow || "overflow",
     horzOverflow: horzOverflow || "overflow",
-    leftInset: lIns ? parseInt(lIns, 10) / 12700 : undefined,
-    topInset: tIns ? parseInt(tIns, 10) / 12700 : undefined,
-    rightInset: rIns ? parseInt(rIns, 10) / 12700 : undefined,
-    bottomInset: bIns ? parseInt(bIns, 10) / 12700 : undefined,
+    leftInset: leftInsetEmu / 12700,
+    topInset: topInsetEmu / 12700,
+    rightInset: rightInsetEmu / 12700,
+    bottomInset: bottomInsetEmu / 12700,
   };
 }
 
@@ -1449,7 +1540,7 @@ function parseFillColor(sp: Element, themeColors: Map<string, string>): string |
   const solidFill = sp.querySelector("spPr > solidFill");
   if (!solidFill) return undefined;
 
-  return parseColorValue(solidFill, themeColors);
+  return parseColorValue(solidFill, themeColors, { includeAlpha: true });
 }
 
 /**
@@ -1462,7 +1553,7 @@ function parseStrokeColor(sp: Element, themeColors: Map<string, string>): string
   const solidFill = ln.querySelector("solidFill");
   if (!solidFill) return undefined;
 
-  return parseColorValue(solidFill, themeColors);
+  return parseColorValue(solidFill, themeColors, { includeAlpha: true });
 }
 
 /**
@@ -1630,12 +1721,18 @@ async function loadDiagramColors(
 /**
  * Parse color value from element (srgbClr or schemeClr)
  */
-function parseColorValue(element: Element, themeColors: Map<string, string>): string | undefined {
+function parseColorValue(
+  element: Element,
+  themeColors: Map<string, string>,
+  options?: { includeAlpha?: boolean },
+): string | undefined {
+  const includeAlpha = options?.includeAlpha === true;
+
   // Check for srgbClr (direct RGB)
   const srgbClr = element.querySelector("srgbClr");
   if (srgbClr) {
     const val = srgbClr.getAttribute("val");
-    if (val) return applyColorTransforms(`#${val}`, srgbClr);
+    if (val) return applyColorTransforms(`#${val}`, srgbClr, includeAlpha);
   }
 
   // Check for schemeClr (theme color reference)
@@ -1645,7 +1742,11 @@ function parseColorValue(element: Element, themeColors: Map<string, string>): st
     if (val) {
       // Look up in theme colors
       const resolved = themeColors.get(val) || val;
-      return applyColorTransforms(resolved.startsWith("#") ? resolved : `#${resolved}`, schemeClr);
+      return applyColorTransforms(
+        resolved.startsWith("#") ? resolved : `#${resolved}`,
+        schemeClr,
+        includeAlpha,
+      );
     }
   }
 
@@ -1653,24 +1754,31 @@ function parseColorValue(element: Element, themeColors: Map<string, string>): st
   const tagName = element.tagName.toLowerCase();
   if (tagName === "srgbclr" || tagName.endsWith(":srgbClr")) {
     const val = element.getAttribute("val");
-    if (val) return applyColorTransforms(`#${val}`, element);
+    if (val) return applyColorTransforms(`#${val}`, element, includeAlpha);
   }
   if (tagName === "schemeclr" || tagName.endsWith(":schemeClr")) {
     const val = element.getAttribute("val");
     if (val) {
       const resolved = themeColors.get(val) || val;
-      return applyColorTransforms(resolved.startsWith("#") ? resolved : `#${resolved}`, element);
+      return applyColorTransforms(
+        resolved.startsWith("#") ? resolved : `#${resolved}`,
+        element,
+        includeAlpha,
+      );
     }
   }
 
   return undefined;
 }
 
-function applyColorTransforms(baseColor: string, colorElement: Element): string {
+function applyColorTransforms(baseColor: string, colorElement: Element, includeAlpha = false): string {
   const rgb = hexToRgb(baseColor);
   if (!rgb) return baseColor;
 
-  let [r, g, b] = rgb;
+  const hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+  if (!hsl) return baseColor;
+
+  let [h, s, l] = hsl;
 
   const lumMod = parseOptionalInt(colorElement.querySelector(":scope > lumMod")?.getAttribute("val"));
   const lumOff = parseOptionalInt(colorElement.querySelector(":scope > lumOff")?.getAttribute("val"));
@@ -1680,26 +1788,49 @@ function applyColorTransforms(baseColor: string, colorElement: Element): string 
   if (lumMod !== undefined || lumOff !== undefined) {
     const mod = (lumMod ?? 100000) / 100000;
     const off = (lumOff ?? 0) / 100000;
-    r = clampColor(Math.round(r * mod + 255 * off));
-    g = clampColor(Math.round(g * mod + 255 * off));
-    b = clampColor(Math.round(b * mod + 255 * off));
+    l = clampUnit(l * mod + off);
   }
 
   if (tint !== undefined) {
     const factor = tint / 100000;
-    r = clampColor(Math.round(r + (255 - r) * factor));
-    g = clampColor(Math.round(g + (255 - g) * factor));
-    b = clampColor(Math.round(b + (255 - b) * factor));
+    l = clampUnit(l + (1 - l) * factor);
   }
 
   if (shade !== undefined) {
     const factor = shade / 100000;
-    r = clampColor(Math.round(r * factor));
-    g = clampColor(Math.round(g * factor));
-    b = clampColor(Math.round(b * factor));
+    l = clampUnit(l * factor);
+  }
+
+  const [r, g, b] = hslToRgb(h, s, l);
+
+  if (includeAlpha) {
+    const alpha = parseAlphaTransform(colorElement);
+    if (alpha < 1) {
+      return `rgba(${r}, ${g}, ${b}, ${formatAlpha(alpha)})`;
+    }
   }
 
   return rgbToHex(r, g, b);
+}
+
+function parseAlphaTransform(colorElement: Element): number {
+  const alpha = parseOptionalInt(colorElement.querySelector(":scope > alpha")?.getAttribute("val"));
+  const alphaMod = parseOptionalInt(
+    colorElement.querySelector(":scope > alphaMod")?.getAttribute("val"),
+  );
+  const alphaOff = parseOptionalInt(
+    colorElement.querySelector(":scope > alphaOff")?.getAttribute("val"),
+  );
+
+  const base = (alpha ?? 100000) / 100000;
+  const mod = (alphaMod ?? 100000) / 100000;
+  const off = (alphaOff ?? 0) / 100000;
+
+  return clampUnit(base * mod + off);
+}
+
+function formatAlpha(alpha: number): string {
+  return (Math.round(alpha * 1000) / 1000).toString();
 }
 
 function hexToRgb(color: string): [number, number, number] | undefined {
@@ -1716,6 +1847,68 @@ function rgbToHex(r: number, g: number, b: number): string {
   return `#${[r, g, b]
     .map((channel) => clampColor(channel).toString(16).padStart(2, "0"))
     .join("")}`;
+}
+
+function rgbToHsl(r: number, g: number, b: number): [number, number, number] | undefined {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (delta !== 0) {
+    s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+
+    if (max === rn) {
+      h = (gn - bn) / delta + (gn < bn ? 6 : 0);
+    } else if (max === gn) {
+      h = (bn - rn) / delta + 2;
+    } else {
+      h = (rn - gn) / delta + 4;
+    }
+
+    h /= 6;
+  }
+
+  if (!Number.isFinite(h) || !Number.isFinite(s) || !Number.isFinite(l)) {
+    return undefined;
+  }
+
+  return [h, s, l];
+}
+
+function hueToRgb(p: number, q: number, t: number): number {
+  let adjusted = t;
+  if (adjusted < 0) adjusted += 1;
+  if (adjusted > 1) adjusted -= 1;
+  if (adjusted < 1 / 6) return p + (q - p) * 6 * adjusted;
+  if (adjusted < 1 / 2) return q;
+  if (adjusted < 2 / 3) return p + (q - p) * (2 / 3 - adjusted) * 6;
+  return p;
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  if (s === 0) {
+    const gray = Math.round(l * 255);
+    return [gray, gray, gray];
+  }
+
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const r = hueToRgb(p, q, h + 1 / 3);
+  const g = hueToRgb(p, q, h);
+  const b = hueToRgb(p, q, h - 1 / 3);
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function clampUnit(value: number): number {
+  return Math.max(0, Math.min(1, value));
 }
 
 function clampColor(value: number): number {
@@ -1950,67 +2143,65 @@ function parsePathList(
   pathLst.querySelectorAll("path").forEach((pathEl) => {
     const commands: import("./types").PathCommand[] = [];
 
-    // Parse move command
-    const moveTo = pathEl.querySelector("moveTo");
-    if (moveTo) {
-      const pt = moveTo.querySelector("pt");
-      if (pt) {
-        const x = parseFloat(pt.getAttribute("x") || "0");
-        const y = parseFloat(pt.getAttribute("y") || "0");
-        commands.push({ type: "M", x, y });
+    for (const child of Array.from(pathEl.children)) {
+      switch (child.localName) {
+        case "moveTo": {
+          const pt = child.querySelector(":scope > pt");
+          if (!pt) break;
+          commands.push({
+            type: "M",
+            x: parseFloat(pt.getAttribute("x") || "0"),
+            y: parseFloat(pt.getAttribute("y") || "0"),
+          });
+          break;
+        }
+        case "lnTo": {
+          const pt = child.querySelector(":scope > pt");
+          if (!pt) break;
+          commands.push({
+            type: "L",
+            x: parseFloat(pt.getAttribute("x") || "0"),
+            y: parseFloat(pt.getAttribute("y") || "0"),
+          });
+          break;
+        }
+        case "cubicBezTo": {
+          const pts = Array.from(child.querySelectorAll(":scope > pt"));
+          if (pts.length < 3) break;
+          commands.push({
+            type: "C",
+            cp1x: parseFloat(pts[0].getAttribute("x") || "0"),
+            cp1y: parseFloat(pts[0].getAttribute("y") || "0"),
+            cp2x: parseFloat(pts[1].getAttribute("x") || "0"),
+            cp2y: parseFloat(pts[1].getAttribute("y") || "0"),
+            x: parseFloat(pts[2].getAttribute("x") || "0"),
+            y: parseFloat(pts[2].getAttribute("y") || "0"),
+          });
+          break;
+        }
+        case "quadBezTo": {
+          const pts = Array.from(child.querySelectorAll(":scope > pt"));
+          if (pts.length < 2) break;
+          commands.push({
+            type: "Q",
+            cpx: parseFloat(pts[0].getAttribute("x") || "0"),
+            cpy: parseFloat(pts[0].getAttribute("y") || "0"),
+            x: parseFloat(pts[1].getAttribute("x") || "0"),
+            y: parseFloat(pts[1].getAttribute("y") || "0"),
+          });
+          break;
+        }
+        case "arcTo": {
+          // TODO: Implement arcTo conversion to SVG path arcs.
+          break;
+        }
+        case "close": {
+          commands.push({ type: "Z" });
+          break;
+        }
+        default:
+          break;
       }
-    }
-
-    // Parse line commands
-    pathEl.querySelectorAll("lnTo").forEach((lnTo) => {
-      const pt = lnTo.querySelector("pt");
-      if (pt) {
-        const x = parseFloat(pt.getAttribute("x") || "0");
-        const y = parseFloat(pt.getAttribute("y") || "0");
-        commands.push({ type: "L", x, y });
-      }
-    });
-
-    // Parse cubic bezier commands
-    pathEl.querySelectorAll("cubicBezTo").forEach((cubic) => {
-      const pts = cubic.querySelectorAll("pt");
-      if (pts.length >= 3) {
-        commands.push({
-          type: "C",
-          cp1x: parseFloat(pts[0].getAttribute("x") || "0"),
-          cp1y: parseFloat(pts[0].getAttribute("y") || "0"),
-          cp2x: parseFloat(pts[1].getAttribute("x") || "0"),
-          cp2y: parseFloat(pts[1].getAttribute("y") || "0"),
-          x: parseFloat(pts[2].getAttribute("x") || "0"),
-          y: parseFloat(pts[2].getAttribute("y") || "0"),
-        });
-      }
-    });
-
-    // Parse quadratic bezier commands
-    pathEl.querySelectorAll("quadBezTo").forEach((quad) => {
-      const pts = quad.querySelectorAll("pt");
-      if (pts.length >= 2) {
-        commands.push({
-          type: "Q",
-          cpx: parseFloat(pts[0].getAttribute("x") || "0"),
-          cpy: parseFloat(pts[0].getAttribute("y") || "0"),
-          x: parseFloat(pts[1].getAttribute("x") || "0"),
-          y: parseFloat(pts[1].getAttribute("y") || "0"),
-        });
-      }
-    });
-
-    // Parse arc commands
-    pathEl.querySelectorAll("arcTo").forEach((_arc) => {
-      // Arc parsing would require more complex coordinate conversion
-      // For now, we'll skip arc commands or approximate with curves
-    });
-
-    // Parse close command
-    const close = pathEl.querySelector("close");
-    if (close) {
-      commands.push({ type: "Z" });
     }
 
     // Parse fill/stroke for this path
