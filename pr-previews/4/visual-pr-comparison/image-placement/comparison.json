@@ -7,11 +7,14 @@
   "slides": [
     {
       "slide": 1,
-      "diffRatio": 0,
+      "branchDiffRatio": 0,
       "mismatchPixels": 0,
       "totalPixels": 921600,
       "comparedWidth": 1280,
-      "comparedHeight": 720
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.023319227430555554,
+      "currentOfficeDiffRatio": 0.023319227430555554,
+      "officeDeltaDiffRatio": 0
     }
   ],
   "maxDiffRatio": 0,
@@ -19,13 +22,20 @@
   "topSlides": [
     {
       "slide": 1,
-      "diffRatio": 0,
+      "branchDiffRatio": 0,
       "mismatchPixels": 0,
       "totalPixels": 921600,
       "comparedWidth": 1280,
-      "comparedHeight": 720
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.023319227430555554,
+      "currentOfficeDiffRatio": 0.023319227430555554,
+      "officeDeltaDiffRatio": 0
     }
   ],
+  "officeMeanDelta": 0,
+  "officeMaxDelta": 0,
+  "topRegressedSlides": [],
+  "topImprovedSlides": [],
   "baselineMetrics": {
     "maxObservedDiffRatio": 0.023319227430555554,
     "meanObservedDiffRatio": 0.023319227430555554
