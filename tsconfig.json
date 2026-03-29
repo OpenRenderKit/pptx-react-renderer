@@ -7,6 +7,7 @@
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
+    "ignoreDeprecations": "5.0",
     "isolatedModules": true,
     "skipLibCheck": true,
     "strict": false,
