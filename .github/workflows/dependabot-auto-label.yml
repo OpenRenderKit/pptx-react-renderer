@@ -1,0 +1,47 @@
+name: dependabot-auto-label
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  apply-release-skip:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const releaseLabels = [
+              "release:patch",
+              "release:minor",
+              "release:major",
+              "release:skip",
+            ];
+
+            const labels = context.payload.pull_request.labels.map((label) => label.name);
+            const hasReleaseLabel = labels.some((label) => releaseLabels.includes(label));
+
+            if (hasReleaseLabel) {
+              core.notice(`Release label already present: ${labels.filter((label) => releaseLabels.includes(label)).join(", ")}`);
+              return;
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ["release:skip"],
+            });
+
+            core.notice("Added default release label: release:skip");
