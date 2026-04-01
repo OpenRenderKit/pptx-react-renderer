@@ -232,6 +232,106 @@ describe("pptx-react-renderer", () => {
     expect(slides[0].elements[0]).toMatchObject({ type: "text" });
   });
 
+  it("parses renderable text shapes with visual frame styling", async () => {
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="914400" y="914400"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="4472C4"/></a:solidFill>
+          <a:ln w="25400">
+            <a:solidFill><a:srgbClr val="112233"/></a:solidFill>
+            <a:prstDash val="dash"/>
+          </a:ln>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="ctr" lIns="38100" rIns="38100"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"><a:buNone/></a:pPr>
+            <a:r><a:rPr sz="1800"/><a:t>Styled text box</a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    expect(slides[0].elements[0]).toMatchObject({
+      type: "text",
+      x: 96,
+      y: 96,
+      width: 192,
+      height: 96,
+      frame: {
+        shapeType: "roundRect",
+        fillColor: "#4472c4",
+        strokeColor: "#112233",
+        strokeWidth: 2,
+        strokeDash: "dashed",
+        roundedCorners: 0.15,
+      },
+    });
+  });
+
+  it("renders text shape frame styling without dropping text content", async () => {
+    const buffer = await createTestPptx([
+      {
+        rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="914400" y="914400"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="4472C4"/></a:solidFill>
+          <a:ln w="25400">
+            <a:solidFill><a:srgbClr val="112233"/></a:solidFill>
+            <a:prstDash val="dash"/>
+          </a:ln>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="ctr" lIns="38100" rIns="38100"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"><a:buNone/></a:pPr>
+            <a:r><a:rPr sz="1800"/><a:t>Styled text box</a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+      },
+    ]);
+
+    const { slides } = await parsePptx(buffer);
+    const container = document.createElement("div");
+
+    renderSlides(slides, { container });
+
+    const textElement = container.querySelector(".pptx-text-element");
+    if (!(textElement instanceof HTMLElement)) {
+      throw new Error("Expected a rendered text element");
+    }
+
+    expect(textElement.textContent).toContain("Styled text box");
+    expect(textElement.style.backgroundColor).toBe("rgb(68, 114, 196)");
+    expect(textElement.style.borderWidth).toBe("2px");
+    expect(textElement.style.borderStyle).toBe("dashed");
+    expect(textElement.style.borderColor).toBe("rgb(17, 34, 51)");
+    expect(parseFloat(textElement.style.borderRadius)).toBeCloseTo(14.4, 4);
+  });
+
   it("falls back to a placeholder for unresolved images", async () => {
     const buffer = await createTestPptx([
       {
