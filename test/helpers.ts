@@ -8,7 +8,10 @@ interface TestSlide {
   relsXml?: string;
 }
 
-export async function createTestPptx(slides: TestSlide[]): Promise<ArrayBuffer> {
+export async function createTestPptx(
+  slides: TestSlide[],
+  options: { themeXml?: string } = {},
+): Promise<ArrayBuffer> {
   const zip = new JSZip();
 
   const overrides = slides
@@ -37,7 +40,8 @@ export async function createTestPptx(slides: TestSlide[]): Promise<ArrayBuffer> 
 
   zip.file(
     "ppt/theme/theme1.xml",
-    `<?xml version="1.0" encoding="UTF-8"?>
+    options.themeXml ||
+      `<?xml version="1.0" encoding="UTF-8"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
   <a:themeElements>
     <a:clrScheme name="Office">

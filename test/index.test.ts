@@ -332,6 +332,253 @@ describe("pptx-react-renderer", () => {
     expect(parseFloat(textElement.style.borderRadius)).toBeCloseTo(14.4, 4);
   });
 
+  it("falls back to theme style refs for text shape frame and font defaults", async () => {
+    const themeXml = `<?xml version="1.0" encoding="UTF-8"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <a:themeElements>
+    <a:clrScheme name="Office">
+      <a:dk1><a:srgbClr val="000000"/></a:dk1>
+      <a:lt1><a:srgbClr val="FFFFFF"/></a:lt1>
+      <a:accent1><a:srgbClr val="4472C4"/></a:accent1>
+      <a:accent2><a:srgbClr val="ED7D31"/></a:accent2>
+    </a:clrScheme>
+    <a:fontScheme name="Office">
+      <a:majorFont><a:latin typeface="Aptos Display"/></a:majorFont>
+      <a:minorFont><a:latin typeface="Aptos"/></a:minorFont>
+    </a:fontScheme>
+    <a:fmtScheme name="Office">
+      <a:fillStyleLst>
+        <a:solidFill><a:srgbClr val="111111"/></a:solidFill>
+        <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+      </a:fillStyleLst>
+      <a:lnStyleLst>
+        <a:ln w="12700">
+          <a:solidFill><a:srgbClr val="111111"/></a:solidFill>
+          <a:prstDash val="dot"/>
+        </a:ln>
+        <a:ln w="25400">
+          <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+          <a:prstDash val="dash"/>
+        </a:ln>
+      </a:lnStyleLst>
+      <a:bgFillStyleLst>
+        <a:solidFill><a:schemeClr val="lt1"/></a:solidFill>
+      </a:bgFillStyleLst>
+    </a:fmtScheme>
+  </a:themeElements>
+</a:theme>`;
+
+    const buffer = await createTestPptx(
+      [
+        {
+          rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="914400" y="914400"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:style>
+          <a:lnRef idx="2"><a:schemeClr val="accent2"/></a:lnRef>
+          <a:fillRef idx="2"><a:schemeClr val="accent1"/></a:fillRef>
+          <a:effectRef idx="0"><a:schemeClr val="accent1"/></a:effectRef>
+          <a:fontRef idx="minor"><a:schemeClr val="lt1"/></a:fontRef>
+        </p:style>
+        <p:txBody>
+          <a:bodyPr anchor="ctr"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"><a:buNone/></a:pPr>
+            <a:r><a:t>Theme styled box</a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+        },
+      ],
+      { themeXml },
+    );
+
+    const { slides } = await parsePptx(buffer);
+    expect(slides[0].elements[0]).toMatchObject({
+      type: "text",
+      frame: {
+        shapeType: "roundRect",
+        fillColor: "#4472c4",
+        strokeColor: "#ed7d31",
+        strokeWidth: 2,
+        strokeDash: "dashed",
+        roundedCorners: 0.15,
+      },
+      defaultFontFamily: "Aptos",
+      defaultColor: "#ffffff",
+    });
+  });
+
+  it("does not apply theme style fills when a shape uses background fill", async () => {
+    const themeXml = `<?xml version="1.0" encoding="UTF-8"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <a:themeElements>
+    <a:clrScheme name="Office">
+      <a:accent1><a:srgbClr val="156082"/></a:accent1>
+    </a:clrScheme>
+    <a:fontScheme name="Office">
+      <a:majorFont><a:latin typeface="Aptos Display"/></a:majorFont>
+      <a:minorFont><a:latin typeface="Aptos"/></a:minorFont>
+    </a:fontScheme>
+    <a:fmtScheme name="Office">
+      <a:fillStyleLst>
+        <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+      </a:fillStyleLst>
+      <a:lnStyleLst>
+        <a:ln w="19050">
+          <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+        </a:ln>
+      </a:lnStyleLst>
+      <a:bgFillStyleLst>
+        <a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>
+      </a:bgFillStyleLst>
+    </a:fmtScheme>
+  </a:themeElements>
+</a:theme>`;
+
+    const buffer = await createTestPptx(
+      [
+        {
+          rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp useBgFill="1">
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="9144000" cy="6858000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:ln><a:noFill/></a:ln>
+        </p:spPr>
+        <p:style>
+          <a:lnRef idx="1"><a:schemeClr val="accent1"/></a:lnRef>
+          <a:fillRef idx="1"><a:schemeClr val="accent1"/></a:fillRef>
+          <a:effectRef idx="0"><a:schemeClr val="accent1"/></a:effectRef>
+          <a:fontRef idx="minor"><a:schemeClr val="accent1"/></a:fontRef>
+        </p:style>
+        <p:txBody>
+          <a:bodyPr anchor="ctr"/>
+          <a:lstStyle/>
+          <a:p/>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+        },
+      ],
+      { themeXml },
+    );
+
+    const { slides } = await parsePptx(buffer);
+    expect(slides[0].elements[0]).toMatchObject({
+      type: "shape",
+      fillColor: undefined,
+      fillType: undefined,
+      strokeColor: undefined,
+      strokeWidth: undefined,
+      strokeDash: undefined,
+    });
+  });
+
+  it("renders theme style ref defaults for text shapes", async () => {
+    const themeXml = `<?xml version="1.0" encoding="UTF-8"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <a:themeElements>
+    <a:clrScheme name="Office">
+      <a:dk1><a:srgbClr val="000000"/></a:dk1>
+      <a:lt1><a:srgbClr val="FFFFFF"/></a:lt1>
+      <a:accent1><a:srgbClr val="4472C4"/></a:accent1>
+      <a:accent2><a:srgbClr val="ED7D31"/></a:accent2>
+    </a:clrScheme>
+    <a:fontScheme name="Office">
+      <a:majorFont><a:latin typeface="Aptos Display"/></a:majorFont>
+      <a:minorFont><a:latin typeface="Aptos"/></a:minorFont>
+    </a:fontScheme>
+    <a:fmtScheme name="Office">
+      <a:fillStyleLst>
+        <a:solidFill><a:srgbClr val="111111"/></a:solidFill>
+        <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+      </a:fillStyleLst>
+      <a:lnStyleLst>
+        <a:ln w="12700">
+          <a:solidFill><a:srgbClr val="111111"/></a:solidFill>
+          <a:prstDash val="dot"/>
+        </a:ln>
+        <a:ln w="25400">
+          <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+          <a:prstDash val="dash"/>
+        </a:ln>
+      </a:lnStyleLst>
+      <a:bgFillStyleLst>
+        <a:solidFill><a:schemeClr val="lt1"/></a:solidFill>
+      </a:bgFillStyleLst>
+    </a:fmtScheme>
+  </a:themeElements>
+</a:theme>`;
+
+    const buffer = await createTestPptx(
+      [
+        {
+          rawXml: `<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:sp>
+        <p:spPr>
+          <a:xfrm><a:off x="914400" y="914400"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:style>
+          <a:lnRef idx="2"><a:schemeClr val="accent2"/></a:lnRef>
+          <a:fillRef idx="2"><a:schemeClr val="accent1"/></a:fillRef>
+          <a:effectRef idx="0"><a:schemeClr val="accent1"/></a:effectRef>
+          <a:fontRef idx="minor"><a:schemeClr val="lt1"/></a:fontRef>
+        </p:style>
+        <p:txBody>
+          <a:bodyPr anchor="ctr"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"><a:buNone/></a:pPr>
+            <a:r><a:t>Theme styled box</a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+</p:sld>`,
+        },
+      ],
+      { themeXml },
+    );
+
+    const { slides } = await parsePptx(buffer);
+    const container = document.createElement("div");
+
+    renderSlides(slides, { container });
+
+    const textElement = container.querySelector(".pptx-text-element");
+    const textSpan = container.querySelector(".pptx-text-element span");
+    if (!(textElement instanceof HTMLElement) || !(textSpan instanceof HTMLElement)) {
+      throw new Error("Expected rendered theme-styled text shape");
+    }
+
+    expect(textElement.style.backgroundColor).toBe("rgb(68, 114, 196)");
+    expect(textElement.style.borderColor).toBe("rgb(237, 125, 49)");
+    expect(textElement.style.borderStyle).toBe("dashed");
+    expect(textSpan.style.fontFamily).toBe("Aptos");
+    expect(textSpan.style.color).toBe("rgb(255, 255, 255)");
+  });
+
   it("falls back to a placeholder for unresolved images", async () => {
     const buffer = await createTestPptx([
       {

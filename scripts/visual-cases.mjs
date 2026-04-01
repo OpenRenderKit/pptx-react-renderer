@@ -92,6 +92,17 @@ export const visualCases = [
     enforce: true,
   },
   {
+    id: "theme-style-refs",
+    sourceFile: ".tmp/visual-fixtures/theme-style-refs.pptx",
+    browserFixturePath: "/.tmp/visual-fixtures/theme-style-refs.pptx",
+    slides: [1],
+    thresholds: {
+      maxDiffRatio: 0.35,
+      meanDiffRatio: 0.2,
+    },
+    enforce: true,
+  },
+  {
     id: "group-transform",
     sourceFile: ".tmp/visual-fixtures/group-transform.pptx",
     browserFixturePath: "/.tmp/visual-fixtures/group-transform.pptx",
