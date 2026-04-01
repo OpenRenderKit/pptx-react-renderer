@@ -1,0 +1,59 @@
+{
+  "caseId": "group-transform",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.041069878472222224,
+      "mismatchPixels": 37850,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.10210503472222222,
+      "currentOfficeDiffRatio": 0.102158203125,
+      "officeDeltaDiffRatio": 0.00005316840277777568
+    }
+  ],
+  "maxDiffRatio": 0.041069878472222224,
+  "meanDiffRatio": 0.041069878472222224,
+  "topSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.041069878472222224,
+      "mismatchPixels": 37850,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.10210503472222222,
+      "currentOfficeDiffRatio": 0.102158203125,
+      "officeDeltaDiffRatio": 0.00005316840277777568
+    }
+  ],
+  "officeMeanDelta": 0.00005316840277777568,
+  "officeMaxDelta": 0.00005316840277777568,
+  "topRegressedSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0.041069878472222224,
+      "mismatchPixels": 37850,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.10210503472222222,
+      "currentOfficeDiffRatio": 0.102158203125,
+      "officeDeltaDiffRatio": 0.00005316840277777568
+    }
+  ],
+  "topImprovedSlides": [],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.10210503472222222,
+    "meanObservedDiffRatio": 0.10210503472222222
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.102158203125,
+    "meanObservedDiffRatio": 0.102158203125
+  }
+}
