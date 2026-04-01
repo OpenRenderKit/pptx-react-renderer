@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import type { GradientFill } from "./types";
 import type {
   PptxSlide,
   PptxParseResult,
@@ -37,7 +38,7 @@ export async function parsePptx(arrayBuffer: ArrayBuffer | Uint8Array): Promise<
   const imageMap = await extractImages(zip);
 
   // Load theme colors for resolving schemeClr references
-  const themeColors = await loadThemeColors(zip);
+  const theme = await loadThemeData(zip);
 
   // Parse each slide
   const slides: PptxSlide[] = [];
@@ -58,7 +59,7 @@ export async function parsePptx(arrayBuffer: ArrayBuffer | Uint8Array): Promise<
       relationships,
       imageMap,
       zip,
-      themeColors,
+      theme,
     );
     slides.push(slide);
   }
@@ -85,8 +86,26 @@ function assertParseApisAvailable(): void {
 /**
  * Load theme colors from theme1.xml
  */
-async function loadThemeColors(zip: JSZip): Promise<Map<string, string>> {
+type ThemeData = {
+  colors: Map<string, string>;
+  fillStyles: Element[];
+  lineStyles: Element[];
+  backgroundFillStyles: Element[];
+  fonts: {
+    major?: string;
+    minor?: string;
+  };
+};
+
+async function loadThemeData(zip: JSZip): Promise<ThemeData> {
   const themeColors = new Map<string, string>();
+  const themeData: ThemeData = {
+    colors: themeColors,
+    fillStyles: [],
+    lineStyles: [],
+    backgroundFillStyles: [],
+    fonts: {},
+  };
 
   try {
     const themeXml = await getFileContent(zip, "ppt/theme/theme1.xml");
@@ -139,11 +158,20 @@ async function loadThemeColors(zip: JSZip): Promise<Map<string, string>> {
       if (themeColors.has("lt2")) themeColors.set("bg2", themeColors.get("lt2")!);
       if (themeColors.has("dk2")) themeColors.set("tx2", themeColors.get("dk2")!);
     }
+
+    themeData.fillStyles = Array.from(doc.querySelectorAll("fmtScheme fillStyleLst > *"));
+    themeData.lineStyles = Array.from(doc.querySelectorAll("fmtScheme lnStyleLst > ln"));
+    themeData.backgroundFillStyles = Array.from(doc.querySelectorAll("fmtScheme bgFillStyleLst > *"));
+
+    themeData.fonts.major =
+      doc.querySelector("fontScheme > majorFont > latin")?.getAttribute("typeface") || undefined;
+    themeData.fonts.minor =
+      doc.querySelector("fontScheme > minorFont > latin")?.getAttribute("typeface") || undefined;
   } catch (error) {
     console.warn("Failed to load theme colors:", error);
   }
 
-  return themeColors;
+  return themeData;
 }
 
 /**
@@ -297,7 +325,7 @@ async function parseSlide(
   relationships: Map<string, string>,
   imageMap: Map<string, { src: string; mimeType: string }>,
   zip: JSZip,
-  themeColors: Map<string, string>,
+  theme: ThemeData,
 ): Promise<PptxSlide> {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, "application/xml");
@@ -311,7 +339,7 @@ async function parseSlide(
       ...(await parseSpTreeChildren(
         spTree,
         zIndex,
-        { relationships, imageMap, zip, themeColors },
+        { relationships, imageMap, zip, theme },
         undefined,
       )),
     );
@@ -349,7 +377,7 @@ type ElementContext = {
   relationships: Map<string, string>;
   imageMap: Map<string, { src: string; mimeType: string }>;
   zip: JSZip;
-  themeColors: Map<string, string>;
+  theme: ThemeData;
 };
 
 async function parseSpTreeChildren(
@@ -363,7 +391,7 @@ async function parseSpTreeChildren(
   for (const child of Array.from(container.children)) {
     switch (child.localName) {
       case "sp": {
-        const element = parseShape(child, zIndex.value++, context.themeColors, transform);
+        const element = parseShape(child, zIndex.value++, context.theme, transform);
         if (element) elements.push(element);
         break;
       }
@@ -389,7 +417,7 @@ async function parseSpTreeChildren(
           zIndex.value++,
           context.relationships,
           context.zip,
-          context.themeColors,
+          context.theme.colors,
           transform,
         );
         if (element) elements.push(element);
@@ -409,13 +437,14 @@ async function parseSpTreeChildren(
 function parseShape(
   sp: Element,
   zIndex: number,
-  themeColors: Map<string, string>,
+  theme: ThemeData,
   transform?: ElementTransform,
 ): SlideElement | null {
   const xfrm = sp.querySelector(":scope > spPr > xfrm");
   if (!xfrm) return null;
 
   const position = parsePosition(xfrm, transform);
+  const styleRefs = parseShapeStyleRefs(sp, theme);
 
   // Check if it's a text element
   const txBody = sp.querySelector("txBody");
@@ -425,28 +454,29 @@ function parseShape(
         txBody,
         position,
         zIndex,
-        themeColors,
-        parseTextShapeFrame(sp, themeColors),
+        theme.colors,
+        parseTextShapeFrame(sp, theme, styleRefs),
+        styleRefs?.text,
       );
     }
 
     if (isPlaceholderShape(sp)) {
-      return parseTextElement(txBody, position, zIndex, themeColors);
+      return parseTextElement(txBody, position, zIndex, theme.colors, undefined, styleRefs?.text);
     }
 
     if (!hasExplicitShapeVisualStyle(sp)) {
-      return parseTextElement(txBody, position, zIndex, themeColors);
+      return parseTextElement(txBody, position, zIndex, theme.colors, undefined, styleRefs?.text);
     }
 
     if (!isLargeVisualShape(position)) {
-      return parseTextElement(txBody, position, zIndex, themeColors);
+      return parseTextElement(txBody, position, zIndex, theme.colors, undefined, styleRefs?.text);
     }
   }
 
   // Check if it's a table
   const tbl = sp.querySelector("tbl");
   if (tbl) {
-    return parseTable(tbl, position, zIndex, themeColors);
+    return parseTable(tbl, position, zIndex, theme.colors);
   }
 
   // Otherwise it's a shape
@@ -460,7 +490,7 @@ function parseShape(
   if (custGeom) {
     const pathLst = custGeom.querySelector(":scope > pathLst");
     if (pathLst) {
-      pathData = parsePathList(pathLst, themeColors);
+      pathData = parsePathList(pathLst, theme.colors);
 
       const firstPath = pathLst.querySelector(":scope > path");
       const viewWidth = firstPath ? parseFloat(firstPath.getAttribute("w") || "0") : 0;
@@ -472,14 +502,21 @@ function parseShape(
     }
   }
 
+  const themeFill = shouldApplyThemeFillFallback(sp) ? styleRefs?.frame : undefined;
+  const themeLine = shouldApplyThemeLineFallback(sp) ? styleRefs?.frame : undefined;
+
   const shapeElement: ShapeElement = {
     type: "shape",
     ...position,
     zIndex,
     shapeType,
-    fillColor: parseFillColor(sp, themeColors),
-    strokeColor: parseStrokeColor(sp, themeColors),
-    strokeWidth: parseStrokeWidth(sp),
+    fillColor: parseFillColor(sp, theme.colors) || themeFill?.fillColor,
+    fillType: themeFill?.fillType,
+    gradient: themeFill?.gradient,
+    strokeColor: parseStrokeColor(sp, theme.colors) || themeLine?.strokeColor,
+    strokeWidth: parseStrokeWidth(sp) || themeLine?.strokeWidth,
+    strokeDash: parseShapeStrokeDash(sp) || themeLine?.strokeDash,
+    roundedCorners: parseRoundedCornersFromGeom(prstGeom) || styleRefs?.frame?.roundedCorners,
     pathData,
     viewBox,
   };
@@ -516,11 +553,191 @@ function hasExplicitShapeVisualStyle(sp: Element): boolean {
   return false;
 }
 
+function shouldApplyThemeFillFallback(sp: Element): boolean {
+  const spPr = sp.querySelector(":scope > spPr");
+  if (!spPr) return false;
+
+  if (sp.getAttribute("useBgFill") === "1") {
+    return false;
+  }
+
+  if (spPr.querySelector(":scope > noFill")) {
+    return false;
+  }
+
+  return !spPr.querySelector(":scope > solidFill, :scope > gradFill, :scope > pattFill, :scope > blipFill");
+}
+
+function shouldApplyThemeLineFallback(sp: Element): boolean {
+  const ln = sp.querySelector(":scope > spPr > ln");
+  if (!ln) return true;
+
+  return !ln.querySelector(":scope > noFill");
+}
+
+type ShapeStyleRefs = {
+  frame?: {
+    fillType?: "solid" | "gradient";
+    fillColor?: string;
+    gradient?: GradientFill;
+    strokeColor?: string;
+    strokeWidth?: number;
+    strokeDash?: string;
+    roundedCorners?: number;
+  };
+  text?: {
+    color?: string;
+    fontFamily?: string;
+  };
+};
+
+function parseShapeStyleRefs(sp: Element, theme: ThemeData): ShapeStyleRefs | undefined {
+  const style = sp.querySelector(":scope > style");
+  if (!style) return undefined;
+
+  const frame: NonNullable<ShapeStyleRefs["frame"]> = {};
+  const text: NonNullable<ShapeStyleRefs["text"]> = {};
+
+  const fillRef = style.querySelector(":scope > fillRef");
+  if (fillRef) {
+    const fillStyle = getThemeFillStyle(fillRef, theme);
+    if (fillStyle?.fillType === "gradient" && fillStyle.gradient) {
+      frame.fillType = "gradient";
+      frame.gradient = fillStyle.gradient;
+    } else if (fillStyle?.fillColor) {
+      frame.fillType = "solid";
+      frame.fillColor = fillStyle.fillColor;
+    }
+  }
+
+  const lnRef = style.querySelector(":scope > lnRef");
+  if (lnRef) {
+    const lineStyle = getThemeLineStyle(lnRef, theme);
+    if (lineStyle) {
+      frame.strokeColor = lineStyle.color;
+      frame.strokeWidth = lineStyle.width;
+      frame.strokeDash = lineStyle.dash;
+    }
+  }
+
+  const fontRef = style.querySelector(":scope > fontRef");
+  if (fontRef) {
+    text.color = parseColorValue(fontRef, theme.colors);
+    const idx = fontRef.getAttribute("idx");
+    if (idx === "minor") text.fontFamily = theme.fonts.minor;
+    if (idx === "major") text.fontFamily = theme.fonts.major;
+  }
+
+  if (sp.querySelector(":scope > spPr > prstGeom")) {
+    frame.roundedCorners = parseRoundedCornersFromGeom(
+      sp.querySelector(":scope > spPr > prstGeom"),
+    );
+  }
+
+  return {
+    frame: Object.values(frame).some((value) => value !== undefined) ? frame : undefined,
+    text: Object.values(text).some((value) => value !== undefined) ? text : undefined,
+  };
+}
+
+function getThemeFillStyle(
+  fillRef: Element,
+  theme: ThemeData,
+): { fillType?: "solid" | "gradient"; fillColor?: string; gradient?: GradientFill } | undefined {
+  const idx = parseOptionalInt(fillRef.getAttribute("idx"));
+  if (idx === undefined) return undefined;
+
+  const styleElement =
+    idx >= 1001
+      ? theme.backgroundFillStyles[idx - 1001]
+      : idx >= 1
+        ? theme.fillStyles[idx - 1]
+        : undefined;
+  if (!styleElement) return undefined;
+
+  const colorOverrides = new Map<string, string>();
+  const placeholderColor = parseColorValue(fillRef, theme.colors);
+  if (placeholderColor) {
+    colorOverrides.set("phClr", placeholderColor);
+  }
+
+  if (styleElement.localName === "solidFill") {
+    const fillColor = parseColorValue(styleElement, theme.colors, { colorOverrides });
+    return fillColor ? { fillType: "solid", fillColor } : undefined;
+  }
+
+  if (styleElement.localName === "gradFill") {
+    const gradient = parseGradientFill(styleElement, theme.colors, colorOverrides);
+    return gradient ? { fillType: "gradient", gradient } : undefined;
+  }
+
+  return undefined;
+}
+
+function getThemeLineStyle(
+  lnRef: Element,
+  theme: ThemeData,
+): { color?: string; width?: number; dash?: string } | undefined {
+  const idx = parseOptionalInt(lnRef.getAttribute("idx"));
+  if (idx === undefined || idx < 1) return undefined;
+
+  const lineElement = theme.lineStyles[idx - 1];
+  if (!lineElement) return undefined;
+
+  const colorOverrides = new Map<string, string>();
+  const placeholderColor = parseColorValue(lnRef, theme.colors);
+  if (placeholderColor) {
+    colorOverrides.set("phClr", placeholderColor);
+  }
+
+  return {
+    color: parseColorValue(lineElement, theme.colors, { colorOverrides, includeAlpha: true }),
+    width: parseOptionalInt(lineElement.getAttribute("w"))
+      ? parseInt(lineElement.getAttribute("w") || "0", 10) / 12700
+      : undefined,
+    dash: parseThemeDash(lineElement),
+  };
+}
+
+function parseGradientFill(
+  gradFill: Element,
+  themeColors: Map<string, string>,
+  colorOverrides: Map<string, string>,
+): GradientFill | undefined {
+  const stops = Array.from(gradFill.querySelectorAll(":scope > gsLst > gs"))
+    .map((stopEl) => {
+      const color = parseColorValue(stopEl, themeColors, { colorOverrides });
+      if (!color) return undefined;
+      return {
+        position: (parseOptionalInt(stopEl.getAttribute("pos")) ?? 0) / 100000,
+        color,
+      };
+    })
+    .filter((stop): stop is NonNullable<typeof stop> => stop !== undefined);
+
+  if (stops.length === 0) return undefined;
+
+  const lin = gradFill.querySelector(":scope > lin");
+  if (lin) {
+    return {
+      type: "linear",
+      angle: ((parseOptionalInt(lin.getAttribute("ang")) ?? 0) / 60000) % 360,
+      stops,
+    };
+  }
+
+  return {
+    type: "radial",
+    stops,
+  };
+}
+
 function parseTextShapeFrame(
   sp: Element,
-  themeColors: Map<string, string>,
+  theme: ThemeData,
+  styleRefs?: ShapeStyleRefs,
 ): TextShapeFrame | undefined {
-  if (!hasExplicitShapeVisualStyle(sp)) {
+  if (!hasExplicitShapeVisualStyle(sp) && !styleRefs?.frame) {
     return undefined;
   }
 
@@ -529,13 +746,16 @@ function parseTextShapeFrame(
     return undefined;
   }
 
+  const themeFill = shouldApplyThemeFillFallback(sp) ? styleRefs?.frame : undefined;
+  const themeLine = shouldApplyThemeLineFallback(sp) ? styleRefs?.frame : undefined;
+
   return {
     shapeType: prstGeom.getAttribute("prst") || "rect",
-    fillColor: parseFillColor(sp, themeColors),
-    strokeColor: parseStrokeColor(sp, themeColors),
-    strokeWidth: parseStrokeWidth(sp),
-    strokeDash: parseShapeStrokeDash(sp),
-    roundedCorners: parseRoundedCornersFromGeom(prstGeom),
+    fillColor: parseFillColor(sp, theme.colors) || themeFill?.fillColor,
+    strokeColor: parseStrokeColor(sp, theme.colors) || themeLine?.strokeColor,
+    strokeWidth: parseStrokeWidth(sp) || themeLine?.strokeWidth,
+    strokeDash: parseShapeStrokeDash(sp) || themeLine?.strokeDash,
+    roundedCorners: parseRoundedCornersFromGeom(prstGeom) || styleRefs?.frame?.roundedCorners,
   };
 }
 
@@ -561,11 +781,12 @@ function parseTextElement(
   zIndex: number,
   themeColors: Map<string, string>,
   frame?: TextShapeFrame,
+  textStyle?: ShapeStyleRefs["text"],
 ): TextElement {
   // Get default properties
   const defaultFontSize = parseFontSize(txBody);
-  const defaultFontFamily = parseFontFamily(txBody);
-  const defaultColor = parseTextColor(txBody, themeColors);
+  const defaultFontFamily = parseFontFamily(txBody) || textStyle?.fontFamily;
+  const defaultColor = parseTextColor(txBody, themeColors) || textStyle?.color;
 
   // Parse paragraphs with rich text runs
   const paragraphs: Paragraph[] = [];
@@ -1606,6 +1827,10 @@ function parseShapeStrokeDash(sp: Element): string | undefined {
   const ln = sp.querySelector("spPr > ln");
   if (!ln || ln.querySelector(":scope > noFill")) return undefined;
 
+  return parseThemeDash(ln);
+}
+
+function parseThemeDash(ln: Element): string | undefined {
   const dash = ln.querySelector(":scope > prstDash")?.getAttribute("val");
   if (dash === "sysDot" || dash === "dot") return "dotted";
   if (dash === "dash" || dash === "sysDash") return "dashed";
@@ -1766,9 +1991,10 @@ async function loadDiagramColors(
 function parseColorValue(
   element: Element,
   themeColors: Map<string, string>,
-  options?: { includeAlpha?: boolean },
+  options?: { includeAlpha?: boolean; colorOverrides?: Map<string, string> },
 ): string | undefined {
   const includeAlpha = options?.includeAlpha === true;
+  const colorOverrides = options?.colorOverrides;
 
   // Check for srgbClr (direct RGB)
   const srgbClr = element.querySelector("srgbClr");
@@ -1783,7 +2009,7 @@ function parseColorValue(
     const val = schemeClr.getAttribute("val");
     if (val) {
       // Look up in theme colors
-      const resolved = themeColors.get(val) || val;
+      const resolved = colorOverrides?.get(val) || themeColors.get(val) || val;
       return applyColorTransforms(
         resolved.startsWith("#") ? resolved : `#${resolved}`,
         schemeClr,
@@ -1801,7 +2027,7 @@ function parseColorValue(
   if (tagName === "schemeclr" || tagName.endsWith(":schemeClr")) {
     const val = element.getAttribute("val");
     if (val) {
-      const resolved = themeColors.get(val) || val;
+      const resolved = colorOverrides?.get(val) || themeColors.get(val) || val;
       return applyColorTransforms(
         resolved.startsWith("#") ? resolved : `#${resolved}`,
         element,

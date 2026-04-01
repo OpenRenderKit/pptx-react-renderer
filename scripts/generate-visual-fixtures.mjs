@@ -14,8 +14,18 @@ await Promise.all([
   writeVisualFixture("bullets-numbering", createBulletsNumberingSlide()),
   writeVisualFixture("text-insets-anchor", createTextInsetsAnchorSlide()),
   writeVisualFixture("paragraph-spacing", createParagraphSpacingSlide()),
-  writeVisualFixture("theme-colors", createThemeColorsSlide()),
-  writeVisualFixture("theme-luminance", createThemeLuminanceSlide()),
+  writeVisualFixture("theme-colors", createThemeColorsSlide(), {
+    relsXml: createThemeFixtureRelationships(),
+  }),
+  writeVisualFixture("theme-luminance", createThemeLuminanceSlide(), {
+    relsXml: createThemeFixtureRelationships(),
+  }),
+  writeVisualFixture("theme-style-refs", createThemeStyleRefsSlide(), {
+    relsXml: createThemeFixtureRelationships(),
+    files: {
+      "ppt/theme/theme1.xml": createThemeStyleRefsTheme(),
+    },
+  }),
   writeVisualFixture("group-transform", createGroupTransformSlide()),
   writeVisualFixture("nested-groups", createNestedGroupsSlide()),
   writeVisualFixture("table-layout", createTableLayoutSlide()),
@@ -331,6 +341,98 @@ function createThemeLuminanceSlide() {
       </p:txBody>
     </p:sp>
   `);
+}
+
+function createThemeStyleRefsSlide() {
+  return slideXml(`
+    <p:sp>
+      <p:spPr>
+        <a:xfrm><a:off x="685800" y="685800"/><a:ext cx="3657600" cy="1828800"/></a:xfrm>
+        <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+      </p:spPr>
+      <p:style>
+        <a:lnRef idx="2"><a:schemeClr val="accent2"/></a:lnRef>
+        <a:fillRef idx="2"><a:schemeClr val="accent1"/></a:fillRef>
+        <a:effectRef idx="0"><a:schemeClr val="accent1"/></a:effectRef>
+        <a:fontRef idx="minor"><a:schemeClr val="lt1"/></a:fontRef>
+      </p:style>
+      <p:txBody>
+        <a:bodyPr anchor="ctr" lIns="152400" tIns="76200" rIns="152400" bIns="76200"/>
+        <a:lstStyle/>
+        <a:p>
+          <a:pPr algn="ctr"><a:buNone/></a:pPr>
+          <a:r><a:rPr sz="2600" b="1"/><a:t>Theme Style Refs</a:t></a:r>
+        </a:p>
+        <a:p>
+          <a:pPr algn="ctr"><a:buNone/></a:pPr>
+          <a:r><a:rPr sz="1800"/><a:t>Fill, line, and font defaults come from p:style.</a:t></a:r>
+        </a:p>
+      </p:txBody>
+    </p:sp>
+    <p:sp>
+      <p:spPr>
+        <a:xfrm><a:off x="4790400" y="1828800"/><a:ext cx="2971800" cy="1600200"/></a:xfrm>
+        <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+      </p:spPr>
+      <p:style>
+        <a:lnRef idx="2"><a:schemeClr val="accent1"/></a:lnRef>
+        <a:fillRef idx="2"><a:schemeClr val="accent2"/></a:fillRef>
+        <a:effectRef idx="0"><a:schemeClr val="accent2"/></a:effectRef>
+        <a:fontRef idx="minor"><a:schemeClr val="lt1"/></a:fontRef>
+      </p:style>
+      <p:txBody>
+        <a:bodyPr anchor="ctr" lIns="114300" tIns="76200" rIns="114300" bIns="76200"/>
+        <a:lstStyle/>
+        <a:p>
+          <a:pPr algn="ctr"><a:buNone/></a:pPr>
+          <a:r><a:rPr sz="2200" b="1"/><a:t>Secondary Box</a:t></a:r>
+        </a:p>
+      </p:txBody>
+    </p:sp>
+  `);
+}
+
+function createThemeStyleRefsTheme() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Theme Style Refs">
+  <a:themeElements>
+    <a:clrScheme name="Custom">
+      <a:dk1><a:srgbClr val="111111"/></a:dk1>
+      <a:lt1><a:srgbClr val="FFFFFF"/></a:lt1>
+      <a:dk2><a:srgbClr val="1F1F1F"/></a:dk2>
+      <a:lt2><a:srgbClr val="F5F5F5"/></a:lt2>
+      <a:accent1><a:srgbClr val="4472C4"/></a:accent1>
+      <a:accent2><a:srgbClr val="ED7D31"/></a:accent2>
+      <a:accent3><a:srgbClr val="70AD47"/></a:accent3>
+      <a:accent4><a:srgbClr val="FFC000"/></a:accent4>
+      <a:accent5><a:srgbClr val="5B9BD5"/></a:accent5>
+      <a:accent6><a:srgbClr val="A5A5A5"/></a:accent6>
+      <a:hlink><a:srgbClr val="0563C1"/></a:hlink>
+      <a:folHlink><a:srgbClr val="954F72"/></a:folHlink>
+    </a:clrScheme>
+    <a:fontScheme name="Custom">
+      <a:majorFont><a:latin typeface="Liberation Sans"/></a:majorFont>
+      <a:minorFont><a:latin typeface="Liberation Sans"/></a:minorFont>
+    </a:fontScheme>
+    <a:fmtScheme name="Custom">
+      <a:fillStyleLst>
+        <a:solidFill><a:srgbClr val="DDDDDD"/></a:solidFill>
+        <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+      </a:fillStyleLst>
+      <a:lnStyleLst>
+        <a:ln w="12700">
+          <a:solidFill><a:srgbClr val="999999"/></a:solidFill>
+        </a:ln>
+        <a:ln w="25400">
+          <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+        </a:ln>
+      </a:lnStyleLst>
+      <a:bgFillStyleLst>
+        <a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>
+      </a:bgFillStyleLst>
+    </a:fmtScheme>
+  </a:themeElements>
+</a:theme>`;
 }
 
 function createGroupTransformSlide() {
@@ -699,6 +801,13 @@ function slideXml(spTreeChildren) {
 function createEmptyRelationships() {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`;
+}
+
+function createThemeFixtureRelationships() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+</Relationships>`;
 }
 
 function hexToRgb(hex) {
