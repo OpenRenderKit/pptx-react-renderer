@@ -1,14 +1,6 @@
 name: publish
 
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - labeled
-      - unlabeled
-      - ready_for_review
   workflow_dispatch:
   push:
     branches:
@@ -18,32 +10,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  release-intent:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    steps:
-      - uses: actions/github-script@v8
-        with:
-          script: |
-            const labels = context.payload.pull_request.labels.map((label) => label.name);
-            const releaseLabels = labels.filter((label) =>
-              ["release:patch", "release:minor", "release:major", "release:skip"].includes(label)
-            );
-
-            if (releaseLabels.length !== 1) {
-              core.setFailed(
-                `Expected exactly one release label on the PR. Found: ${releaseLabels.join(", ") || "none"}. ` +
-                "Use one of: release:patch, release:minor, release:major, release:skip."
-              );
-              return;
-            }
-
-            core.notice(`Release intent: ${releaseLabels[0]}`);
-
   publish:
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,6 +28,11 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
 
       - run: pnpm install --frozen-lockfile
       - id: package

@@ -1,0 +1,38 @@
+name: release-intent
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - ready_for_review
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  release-intent:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map((label) => label.name);
+            const releaseLabels = labels.filter((label) =>
+              ["release:patch", "release:minor", "release:major", "release:skip"].includes(label)
+            );
+
+            if (releaseLabels.length !== 1) {
+              core.setFailed(
+                `Expected exactly one release label on the PR. Found: ${releaseLabels.join(", ") || "none"}. ` +
+                "Use one of: release:patch, release:minor, release:major, release:skip."
+              );
+              return;
+            }
+
+            core.notice(`Release intent: ${releaseLabels[0]}`);
