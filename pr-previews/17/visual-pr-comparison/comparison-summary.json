@@ -1,7 +1,7 @@
 {
   "baselineDir": "/home/runner/work/pptx-react-renderer/pptx-react-renderer/.tmp/visual-baseline/test-results/visual-regression",
   "currentDir": "/home/runner/work/pptx-react-renderer/pptx-react-renderer/test-results/visual-regression",
-  "generatedAt": "2026-04-01T08:58:36.180Z",
+  "generatedAt": "2026-04-01T09:04:16.195Z",
   "cases": [
     {
       "caseId": "bullets-numbering",

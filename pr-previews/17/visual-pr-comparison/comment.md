@@ -3,7 +3,7 @@
 
 Compared `15` visual cases against the latest successful `main` visual artifact and detected no renderer-output changes.
 
-- [Workflow run](https://github.com/OpenRenderKit/pptx-react-renderer/actions/runs/23840511209)
+- [Workflow run](https://github.com/OpenRenderKit/pptx-react-renderer/actions/runs/23840741119)
 - [PR vs main report](https://openrenderkit.github.io/pptx-react-renderer/pr-previews/17/visual-pr-comparison/index.html)
 - [Office reference vs current report](https://openrenderkit.github.io/pptx-react-renderer/pr-previews/17/visual-regression/index.html)
 
