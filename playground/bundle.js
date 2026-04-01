@@ -2662,7 +2662,13 @@ function parseShape(sp, zIndex, themeColors, transform) {
   const txBody = sp.querySelector("txBody");
   if (txBody) {
     if (hasRenderableTextContent(txBody)) {
-      return parseTextElement(txBody, position, zIndex, themeColors);
+      return parseTextElement(
+        txBody,
+        position,
+        zIndex,
+        themeColors,
+        parseTextShapeFrame(sp, themeColors)
+      );
     }
     if (isPlaceholderShape(sp)) {
       return parseTextElement(txBody, position, zIndex, themeColors);
@@ -2730,13 +2736,30 @@ function hasExplicitShapeVisualStyle(sp) {
   }
   return false;
 }
+function parseTextShapeFrame(sp, themeColors) {
+  if (!hasExplicitShapeVisualStyle(sp)) {
+    return void 0;
+  }
+  const prstGeom = sp.querySelector(":scope > spPr > prstGeom");
+  if (!prstGeom) {
+    return void 0;
+  }
+  return {
+    shapeType: prstGeom.getAttribute("prst") || "rect",
+    fillColor: parseFillColor(sp, themeColors),
+    strokeColor: parseStrokeColor(sp, themeColors),
+    strokeWidth: parseStrokeWidth(sp),
+    strokeDash: parseShapeStrokeDash(sp),
+    roundedCorners: parseRoundedCornersFromGeom(prstGeom)
+  };
+}
 function isPlaceholderShape(sp) {
   return sp.querySelector(":scope > nvSpPr > nvPr > ph") !== null;
 }
 function isLargeVisualShape(position) {
   return position.width * position.height >= EMPTY_TEXT_SHAPE_FALLBACK_MIN_AREA_PX;
 }
-function parseTextElement(txBody, position, zIndex, themeColors) {
+function parseTextElement(txBody, position, zIndex, themeColors, frame) {
   const defaultFontSize = parseFontSize(txBody);
   const defaultFontFamily = parseFontFamily(txBody);
   const defaultColor = parseTextColor(txBody, themeColors);
@@ -2768,6 +2791,7 @@ function parseTextElement(txBody, position, zIndex, themeColors) {
     zIndex,
     runs,
     paragraphs: paragraphs.length > 1 ? paragraphs : void 0,
+    frame,
     defaultFontSize,
     defaultFontFamily,
     defaultColor,
@@ -3390,6 +3414,14 @@ function parseStrokeWidth(sp) {
   if (!w) return void 0;
   return parseInt(w, 10) / 12700;
 }
+function parseShapeStrokeDash(sp) {
+  const ln = sp.querySelector("spPr > ln");
+  if (!ln || ln.querySelector(":scope > noFill")) return void 0;
+  const dash = ln.querySelector(":scope > prstDash")?.getAttribute("val");
+  if (dash === "sysDot" || dash === "dot") return "dotted";
+  if (dash === "dash" || dash === "sysDash") return "dashed";
+  return dash ? "solid" : void 0;
+}
 async function parseGraphicFrame(graphicFrame, zIndex, relationships, zip, themeColors, transform) {
   const xfrm = graphicFrame.querySelector(":scope > xfrm");
   if (!xfrm) return null;
@@ -3975,6 +4007,32 @@ function renderGroupElement(element, scale) {
   });
   return div;
 }
+function applyBoxFrameStyles(element, frame, width, height, scale, options = {}) {
+  if (options.includeFill !== false) {
+    element.style.backgroundColor = frame.fillColor || "transparent";
+  }
+  if (frame.strokeWidth && frame.strokeWidth > 0) {
+    element.style.borderWidth = `${frame.strokeWidth * scale}px`;
+    element.style.borderStyle = frame.strokeDash || "solid";
+    element.style.borderColor = frame.strokeColor || "#000";
+  }
+  element.style.borderRadius = getBoxFrameRadius(frame, width, height, scale);
+}
+function getBoxFrameRadius(frame, width, height, scale) {
+  if (frame.roundedCorners !== void 0) {
+    const radius = frame.roundedCorners <= 1 ? Math.min(width, height) * frame.roundedCorners * scale : frame.roundedCorners * scale;
+    return `${radius}px`;
+  }
+  switch (frame.shapeType) {
+    case "ellipse":
+    case "circle":
+      return "50%";
+    case "roundRect":
+      return `${Math.min(width, height) * 0.1 * scale}px`;
+    default:
+      return "0";
+  }
+}
 function renderTextElement(element, scale) {
   const div = document.createElement("div");
   div.className = "pptx-text-element";
@@ -3984,6 +4042,9 @@ function renderTextElement(element, scale) {
   div.style.height = `${element.height * scale}px`;
   div.style.position = "absolute";
   div.style.boxSizing = "border-box";
+  if (element.frame) {
+    applyBoxFrameStyles(div, element.frame, element.width, element.height, scale);
+  }
   div.style.fontFamily = element.defaultFontFamily || "Arial, sans-serif";
   div.style.textAlign = element.align || "left";
   div.style.color = element.defaultColor || "inherit";
@@ -4265,26 +4326,7 @@ function renderShapeElement(element, scale) {
   } else {
     div.style.backgroundColor = element.fillColor || "transparent";
   }
-  if (element.strokeWidth && element.strokeWidth > 0) {
-    div.style.borderWidth = `${element.strokeWidth * scale}px`;
-    div.style.borderStyle = element.strokeDash || "solid";
-    div.style.borderColor = element.strokeColor || "#000";
-  }
-  if (element.roundedCorners) {
-    div.style.borderRadius = `${element.roundedCorners * scale}px`;
-  } else {
-    switch (element.shapeType) {
-      case "ellipse":
-      case "circle":
-        div.style.borderRadius = "50%";
-        break;
-      case "roundRect":
-        div.style.borderRadius = `${Math.min(element.width, element.height) * 0.1 * scale}px`;
-        break;
-      default:
-        div.style.borderRadius = "0";
-    }
-  }
+  applyBoxFrameStyles(div, element, element.width, element.height, scale, { includeFill: false });
   return div;
 }
 function renderTableElement(element, scale) {
