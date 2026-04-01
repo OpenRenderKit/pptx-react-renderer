@@ -2,6 +2,7 @@ import type {
   PptxSlide,
   SlideElement,
   TextElement,
+  TextShapeFrame,
   TextRun,
   TextField,
   ContentElement,
@@ -127,6 +128,52 @@ function renderGroupElement(element: GroupElement, scale: number): HTMLElement {
   return div;
 }
 
+function applyBoxFrameStyles(
+  element: HTMLElement,
+  frame: Pick<TextShapeFrame, "shapeType" | "fillColor" | "strokeColor" | "strokeWidth" | "strokeDash" | "roundedCorners">,
+  width: number,
+  height: number,
+  scale: number,
+  options: { includeFill?: boolean } = {},
+): void {
+  if (options.includeFill !== false) {
+    element.style.backgroundColor = frame.fillColor || "transparent";
+  }
+
+  if (frame.strokeWidth && frame.strokeWidth > 0) {
+    element.style.borderWidth = `${frame.strokeWidth * scale}px`;
+    element.style.borderStyle = frame.strokeDash || "solid";
+    element.style.borderColor = frame.strokeColor || "#000";
+  }
+
+  element.style.borderRadius = getBoxFrameRadius(frame, width, height, scale);
+}
+
+function getBoxFrameRadius(
+  frame: Pick<TextShapeFrame, "shapeType" | "roundedCorners">,
+  width: number,
+  height: number,
+  scale: number,
+): string {
+  if (frame.roundedCorners !== undefined) {
+    const radius =
+      frame.roundedCorners <= 1
+        ? Math.min(width, height) * frame.roundedCorners * scale
+        : frame.roundedCorners * scale;
+    return `${radius}px`;
+  }
+
+  switch (frame.shapeType) {
+    case "ellipse":
+    case "circle":
+      return "50%";
+    case "roundRect":
+      return `${Math.min(width, height) * 0.1 * scale}px`;
+    default:
+      return "0";
+  }
+}
+
 /**
  * Render text element with rich formatting
  */
@@ -143,6 +190,10 @@ function renderTextElement(element: TextElement, scale: number): HTMLElement {
 
   // Always use box-sizing for consistent sizing
   div.style.boxSizing = "border-box";
+
+  if (element.frame) {
+    applyBoxFrameStyles(div, element.frame, element.width, element.height, scale);
+  }
 
   // Container styling
   div.style.fontFamily = element.defaultFontFamily || "Arial, sans-serif";
@@ -575,29 +626,7 @@ function renderShapeElement(element: ShapeElement, scale: number): HTMLElement {
     div.style.backgroundColor = element.fillColor || "transparent";
   }
 
-  // Border styling
-  if (element.strokeWidth && element.strokeWidth > 0) {
-    div.style.borderWidth = `${element.strokeWidth * scale}px`;
-    div.style.borderStyle = element.strokeDash || "solid";
-    div.style.borderColor = element.strokeColor || "#000";
-  }
-
-  // Border radius based on shape type
-  if (element.roundedCorners) {
-    div.style.borderRadius = `${element.roundedCorners * scale}px`;
-  } else {
-    switch (element.shapeType) {
-      case "ellipse":
-      case "circle":
-        div.style.borderRadius = "50%";
-        break;
-      case "roundRect":
-        div.style.borderRadius = `${Math.min(element.width, element.height) * 0.1 * scale}px`;
-        break;
-      default:
-        div.style.borderRadius = "0";
-    }
-  }
+  applyBoxFrameStyles(div, element, element.width, element.height, scale, { includeFill: false });
 
   return div;
 }

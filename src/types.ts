@@ -73,6 +73,7 @@ export interface TextElement extends BaseElement {
   type: "text";
   runs: TextRun[]; // Array of text runs with individual formatting
   paragraphs?: Paragraph[]; // Support for multiple paragraphs
+  frame?: TextShapeFrame; // Visual frame styling for text-bearing shapes
   defaultFontSize?: number;
   defaultFontFamily?: string;
   defaultColor?: string;
@@ -89,6 +90,15 @@ export interface TextElement extends BaseElement {
   topInset?: number; // top margin inset in points
   rightInset?: number; // right margin inset in points
   bottomInset?: number; // bottom margin inset in points
+}
+
+export interface TextShapeFrame {
+  shapeType: string;
+  fillColor?: string;
+  strokeColor?: string;
+  strokeWidth?: number;
+  strokeDash?: string;
+  roundedCorners?: number;
 }
 
 export interface Paragraph {

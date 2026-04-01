@@ -13,6 +13,7 @@ import type {
   TableCell,
   SlideBackground,
   GraphicFrameElement,
+  TextShapeFrame,
   DiagramData,
   DiagramNode,
   DiagramShape,
@@ -420,7 +421,13 @@ function parseShape(
   const txBody = sp.querySelector("txBody");
   if (txBody) {
     if (hasRenderableTextContent(txBody)) {
-      return parseTextElement(txBody, position, zIndex, themeColors);
+      return parseTextElement(
+        txBody,
+        position,
+        zIndex,
+        themeColors,
+        parseTextShapeFrame(sp, themeColors),
+      );
     }
 
     if (isPlaceholderShape(sp)) {
@@ -509,6 +516,29 @@ function hasExplicitShapeVisualStyle(sp: Element): boolean {
   return false;
 }
 
+function parseTextShapeFrame(
+  sp: Element,
+  themeColors: Map<string, string>,
+): TextShapeFrame | undefined {
+  if (!hasExplicitShapeVisualStyle(sp)) {
+    return undefined;
+  }
+
+  const prstGeom = sp.querySelector(":scope > spPr > prstGeom");
+  if (!prstGeom) {
+    return undefined;
+  }
+
+  return {
+    shapeType: prstGeom.getAttribute("prst") || "rect",
+    fillColor: parseFillColor(sp, themeColors),
+    strokeColor: parseStrokeColor(sp, themeColors),
+    strokeWidth: parseStrokeWidth(sp),
+    strokeDash: parseShapeStrokeDash(sp),
+    roundedCorners: parseRoundedCornersFromGeom(prstGeom),
+  };
+}
+
 function isPlaceholderShape(sp: Element): boolean {
   return sp.querySelector(":scope > nvSpPr > nvPr > ph") !== null;
 }
@@ -530,6 +560,7 @@ function parseTextElement(
   position: { x: number; y: number; width: number; height: number },
   zIndex: number,
   themeColors: Map<string, string>,
+  frame?: TextShapeFrame,
 ): TextElement {
   // Get default properties
   const defaultFontSize = parseFontSize(txBody);
@@ -582,6 +613,7 @@ function parseTextElement(
     zIndex,
     runs,
     paragraphs: paragraphs.length > 1 ? paragraphs : undefined,
+    frame,
     defaultFontSize,
     defaultFontFamily,
     defaultColor,
@@ -1568,6 +1600,16 @@ function parseStrokeWidth(sp: Element): number | undefined {
 
   // Convert EMUs to points
   return parseInt(w, 10) / 12700;
+}
+
+function parseShapeStrokeDash(sp: Element): string | undefined {
+  const ln = sp.querySelector("spPr > ln");
+  if (!ln || ln.querySelector(":scope > noFill")) return undefined;
+
+  const dash = ln.querySelector(":scope > prstDash")?.getAttribute("val");
+  if (dash === "sysDot" || dash === "dot") return "dotted";
+  if (dash === "dash" || dash === "sysDash") return "dashed";
+  return dash ? "solid" : undefined;
 }
 
 /**
