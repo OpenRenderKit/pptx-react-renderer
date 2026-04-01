@@ -1,0 +1,59 @@
+{
+  "caseId": "theme-luminance",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.18469075520833333,
+      "currentOfficeDiffRatio": 0.053076171875,
+      "officeDeltaDiffRatio": -0.13161458333333334
+    }
+  ],
+  "maxDiffRatio": 0,
+  "meanDiffRatio": 0,
+  "topSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.18469075520833333,
+      "currentOfficeDiffRatio": 0.053076171875,
+      "officeDeltaDiffRatio": -0.13161458333333334
+    }
+  ],
+  "officeMeanDelta": -0.13161458333333334,
+  "officeMaxDelta": -0.13161458333333334,
+  "topRegressedSlides": [],
+  "topImprovedSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.18469075520833333,
+      "currentOfficeDiffRatio": 0.053076171875,
+      "officeDeltaDiffRatio": -0.13161458333333334
+    }
+  ],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.18469075520833333,
+    "meanObservedDiffRatio": 0.18469075520833333
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.053076171875,
+    "meanObservedDiffRatio": 0.053076171875
+  }
+}
