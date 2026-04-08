@@ -1,0 +1,47 @@
+{
+  "caseId": "bullets-numbering",
+  "compared": true,
+  "selectedSlides": [
+    1
+  ],
+  "slides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.015111762152777777,
+      "currentOfficeDiffRatio": 0.015111762152777777,
+      "officeDeltaDiffRatio": 0
+    }
+  ],
+  "maxDiffRatio": 0,
+  "meanDiffRatio": 0,
+  "topSlides": [
+    {
+      "slide": 1,
+      "branchDiffRatio": 0,
+      "mismatchPixels": 0,
+      "totalPixels": 921600,
+      "comparedWidth": 1280,
+      "comparedHeight": 720,
+      "baselineOfficeDiffRatio": 0.015111762152777777,
+      "currentOfficeDiffRatio": 0.015111762152777777,
+      "officeDeltaDiffRatio": 0
+    }
+  ],
+  "officeMeanDelta": 0,
+  "officeMaxDelta": 0,
+  "topRegressedSlides": [],
+  "topImprovedSlides": [],
+  "baselineMetrics": {
+    "maxObservedDiffRatio": 0.015111762152777777,
+    "meanObservedDiffRatio": 0.015111762152777777
+  },
+  "currentMetrics": {
+    "maxObservedDiffRatio": 0.015111762152777777,
+    "meanObservedDiffRatio": 0.015111762152777777
+  }
+}
