@@ -24,7 +24,7 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         with:
           script: |
             const labels = context.payload.pull_request.labels.map((label) => label.name);
@@ -68,7 +68,7 @@ jobs:
           echo "name=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).name")" >> "$GITHUB_OUTPUT"
           echo "source_version=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")" >> "$GITHUB_OUTPUT"
       - id: pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             if (context.eventName === "workflow_dispatch") {
@@ -154,7 +154,7 @@ jobs:
           git tag "$RELEASE_TAG" "${GITHUB_SHA}"
           git push origin "$RELEASE_TAG"
       - if: steps.plan.outputs.should_publish == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           RELEASE_TAG: v${{ steps.plan.outputs.next_version }}
           RELEASE_PR_NUMBER: ${{ steps.pr.outputs.number }}
